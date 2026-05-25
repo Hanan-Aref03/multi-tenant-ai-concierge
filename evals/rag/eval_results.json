@@ -1,0 +1,162 @@
+{
+  "mode": "mock",
+  "summary": {
+    "total_cases": 15,
+    "hit_at_5_pct": 100.0,
+    "mrr": 1.0,
+    "faithfulness": 1.0,
+    "relevance": 1.0
+  },
+  "cases": [
+    {
+      "query": "What are your standard business support hours?",
+      "expected_content_id": "doc_support_policy",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: What are your standard business support hours?. The answer is: 9:00 AM 5:00 PM Monday to Friday."
+    },
+    {
+      "query": "Do you offer support on weekends?",
+      "expected_content_id": "doc_support_policy",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: Do you offer support on weekends?. The answer is: emergency support SLA premium plan."
+    },
+    {
+      "query": "How do I request a deletion of my account data?",
+      "expected_content_id": "doc_privacy_policy",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: How do I request a deletion of my account data?. The answer is: privacy@acme.com 30 days deletion request."
+    },
+    {
+      "query": "What security compliance certifications do you hold?",
+      "expected_content_id": "doc_security_compliance",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: What security compliance certifications do you hold?. The answer is: SOC 2 Type II ISO 27001 HIPAA."
+    },
+    {
+      "query": "Can I cancel my monthly subscription at any time?",
+      "expected_content_id": "doc_billing_faq",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: Can I cancel my monthly subscription at any time?. The answer is: cancel no refunds billing cycle."
+    },
+    {
+      "query": "What is the maximum limit on file uploads?",
+      "expected_content_id": "doc_platform_limits",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: What is the maximum limit on file uploads?. The answer is: 100MB per file attachment."
+    },
+    {
+      "query": "Do you provide custom developer API integration services?",
+      "expected_content_id": "doc_services_catalog",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: Do you provide custom developer API integration services?. The answer is: consulting custom API onboarding."
+    },
+    {
+      "query": "What is your uptime service level agreement?",
+      "expected_content_id": "doc_sla_policy",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: What is your uptime service level agreement?. The answer is: 99.9% credit downtime."
+    },
+    {
+      "query": "How can I update my billing email address?",
+      "expected_content_id": "doc_billing_faq",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: How can I update my billing email address?. The answer is: settings billing info invoice."
+    },
+    {
+      "query": "Do you store password hashes securely?",
+      "expected_content_id": "doc_security_compliance",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: Do you store password hashes securely?. The answer is: bcrypt salted password encryption."
+    },
+    {
+      "query": "What is the training duration for standard package onboarding?",
+      "expected_content_id": "doc_services_catalog",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: What is the training duration for standard package onboarding?. The answer is: 2 hours onboarding sessions video training."
+    },
+    {
+      "query": "Where is my data hosted physically?",
+      "expected_content_id": "doc_privacy_policy",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: Where is my data hosted physically?. The answer is: AWS US-East Frankfurt."
+    },
+    {
+      "query": "Who is eligible for the enterprise discount?",
+      "expected_content_id": "doc_billing_faq",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: Who is eligible for the enterprise discount?. The answer is: annual plan 50 seats sales team."
+    },
+    {
+      "query": "How do you handle security vulnerability disclosures?",
+      "expected_content_id": "doc_security_compliance",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: How do you handle security vulnerability disclosures?. The answer is: security@acme.com responsible disclosure bug bounty."
+    },
+    {
+      "query": "Is there a charge for migrating from a competitor?",
+      "expected_content_id": "doc_services_catalog",
+      "hit_rank": 1,
+      "hit_at_5": 1,
+      "mrr": 1.0,
+      "faithfulness": 1.0,
+      "relevance": 1.0,
+      "answer": "Regarding your question: Is there a charge for migrating from a competitor?. The answer is: free migration assisted transfer first month."
+    }
+  ]
+}
