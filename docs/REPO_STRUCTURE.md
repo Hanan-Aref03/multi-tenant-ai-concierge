@@ -96,7 +96,7 @@ multi-tenant-ai-concierge/
 
 ## Ownership
 
-- Owner A / Hanan: `apps/api/`, `services/rag/`, `services/router/`, `services/agent/`, `packages/contracts/`
-- Owner B / Mohammad: `infrastructure/postgres/`, `infrastructure/vault/`, tenant auth and RLS inside the API
-- Owner C / Rayan: `apps/modelserver/`, `services/guardrails/`, `evals/`, `tests/security/`
+- Owner A / Hanan: `infrastructure/postgres/`, `infrastructure/vault/`, `infrastructure/redis/`, `infrastructure/minio/`, `apps/api/app/core/`, `apps/api/app/db/`
+- Owner B / Mohammad: `services/router/`, `services/rag/`, `services/agent/`, `services/embeddings/`, `prompts/`, `evals/rag/`, `evals/agent/`
+- Owner C / Rayan: `apps/modelserver/`, `services/guardrails/`, `evals/classifier/`, `evals/redteam/`, `tests/security/`
 - Owner D / Ali Faddel: `apps/widget/`, `apps/admin/`, `.github/workflows/`, `scripts/`

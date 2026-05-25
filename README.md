@@ -8,9 +8,9 @@ The big rule is simple: Tenant A must never see Tenant B data.
 
 | Owner | Member | Primary Areas | First Things To Build |
 |-------|--------|---------------|-----------------------|
-| Owner A | Hanan | `apps/api/`, `services/rag/`, `services/router/`, `services/agent/`, `packages/contracts/` | Backend architecture, tenant-safe API contracts, retrieval pipeline, router/agent split |
-| Owner B | Mohammad | `infrastructure/postgres/`, `infrastructure/vault/`, `services/security/` concepts inside API | Auth, RLS, tenant provisioning, audit logging, secrets, rate limits |
-| Owner C | Rayan | `apps/modelserver/`, `services/guardrails/`, `evals/`, `tests/security/` | Classifier, guardrails, red-team evals, redaction, model-serving checks |
+| Owner A | Hanan | `infrastructure/postgres/`, `infrastructure/vault/`, `infrastructure/redis/`, `infrastructure/minio/`, `apps/api/app/core/`, `apps/api/app/db/` | Platform, tenancy, isolation, provisioning, auth, RLS, audit logging |
+| Owner B | Mohammad | `services/router/`, `services/rag/`, `services/agent/`, `services/embeddings/`, `prompts/`, `evals/rag/`, `evals/agent/` | Agent, RAG, memory, routing, tool contracts, retrieval quality |
+| Owner C | Rayan | `apps/modelserver/`, `services/guardrails/`, `evals/classifier/`, `evals/redteam/`, `tests/security/` | Classifier, guardrails, red-team evals, redaction, model-serving checks |
 | Owner D | Ali Faddel | `apps/widget/`, `apps/admin/`, `.github/workflows/`, `scripts/` | Widget UI, admin dashboard, CI/CD, bootstrap scripts, release automation |
 
 ## Repository Shape

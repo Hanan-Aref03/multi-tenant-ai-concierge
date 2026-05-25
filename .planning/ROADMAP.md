@@ -7,18 +7,18 @@
 
 | # | Phase | Day | Lead | Goal | Requirements |
 |---|-------|-----|------|------|--------------|
-| 1 | Platform Spine | Day 1 | Mohammad | Establish secure tenant bootstrap, auth, RLS, audit logging, and a reproducible local stack. | TENA-01..05, SAFE-04, OPS-01 |
-| 2 | Knowledge Layer | Day 2 | Hanan | Build tenant-scoped content ingestion, chunking, indexing, and retrieval. | KNOW-01..04 |
+| 1 | Platform Spine | Day 1 | Hanan | Establish secure tenant bootstrap, auth, RLS, audit logging, and a reproducible local stack. | TENA-01..05, SAFE-04, OPS-01 |
+| 2 | Knowledge Layer | Day 2 | Mohammad | Build tenant-scoped content ingestion, chunking, indexing, and retrieval. | KNOW-01..04 |
 | 3 | Widget Surface | Day 3 | Ali Faddel | Ship the embeddable widget, signed token flow, origin checks, session continuity, and rate limiting. | WIDG-01..04, SAFE-05 |
-| 4 | Router and Agent | Day 4 | Hanan | Add classifier routing, bounded tool-calling, lead capture, escalation, and lean model serving. | ROUT-01..07, OPS-04 |
+| 4 | Router and Agent | Day 4 | Mohammad | Add classifier routing, bounded tool-calling, lead capture, escalation, and lean model serving. | ROUT-01..07, OPS-04 |
 | 5 | Hardening and Release | Day 5 | Rayan | Lock in guardrails, redaction, traces, CI eval gates, and erasure so the demo is safe and reproducible. | SAFE-01..03, SAFE-06, OPS-02..03 |
 
 ## Phase Details
 
 ### Phase 1: Platform Spine
 **Goal:** Create the secure foundation: tenant provisioning, auth, database isolation, audit logging, and a one-command local environment.
-**Lead:** Mohammad
-**Support:** Hanan for architecture review, Ali Faddel for repo/CI scaffolding
+**Lead:** Hanan
+**Support:** Mohammad for agent/RAG contract alignment, Ali Faddel for repo/CI scaffolding
 **Requirements:** TENA-01, TENA-02, TENA-03, TENA-04, TENA-05, SAFE-04, OPS-01
 **Success Criteria:**
 1. A new tenant can be provisioned with a first admin and has a unique tenant identity.
@@ -28,8 +28,8 @@
 
 ### Phase 2: Knowledge Layer
 **Goal:** Turn tenant content into a tenant-scoped knowledge base that the assistant can reliably search and answer from.
-**Lead:** Hanan
-**Support:** Mohammad for security boundaries, Rayan for evaluation contract
+**Lead:** Mohammad
+**Support:** Hanan for security boundaries, Rayan for evaluation contract
 **Requirements:** KNOW-01, KNOW-02, KNOW-03, KNOW-04
 **Success Criteria:**
 1. Tenant admins can upload content types from the brief and see them ingested successfully.
@@ -51,8 +51,8 @@
 
 ### Phase 4: Router and Agent
 **Goal:** Add the workflow router and the bounded agent so easy questions stay cheap and hard questions can act safely.
-**Lead:** Hanan
-**Support:** Rayan for classifier/model serving, Mohammad for lead persistence and escalation records
+**Lead:** Mohammad
+**Support:** Rayan for classifier/model serving, Hanan for lead persistence and escalation records
 **Requirements:** ROUT-01, ROUT-02, ROUT-03, ROUT-04, ROUT-05, ROUT-06, ROUT-07, OPS-04
 **Success Criteria:**
 1. The router can separate easy turns from hard turns consistently.

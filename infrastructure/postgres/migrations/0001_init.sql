@@ -1,3 +1,2 @@
--- Mohammad owns the base Postgres schema.
+-- Hanan owns the base Postgres schema for platform tenancy and isolation.
 -- TODO: create tenants, users, content, conversations, and leads tables.
-

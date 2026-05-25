@@ -1,4 +1,3 @@
 # Rayan owns the eval runner.
-# Hanan consumes these results to tune retrieval and routing.
+# Mohammad consumes these results to tune retrieval and routing.
 # TODO: run classifier, RAG, agent, and red-team evaluations.
-

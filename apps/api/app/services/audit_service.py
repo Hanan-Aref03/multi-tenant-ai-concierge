@@ -1,7 +1,6 @@
 """Audit logging and security event recording.
 
-Mohammad owns the sensitive action log path.
+Hanan owns the sensitive action log path.
 """
 
 # TODO: record provisioning, deletion, access-denied, and erasure events.
-

@@ -1,9 +1,8 @@
 # MinIO bucket plan
 
-Mohammad owns the object storage boundary.
-Hanan owns any retrieval or erasure flow that touches blobs.
+Hanan owns the object storage boundary.
+Mohammad owns any retrieval or memory flow that reads tenant content.
 
 TODO:
 - define buckets for uploads, generated artifacts, and exports
 - keep tenant data partitioned and erasable
-

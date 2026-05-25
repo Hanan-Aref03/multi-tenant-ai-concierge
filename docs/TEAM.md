@@ -14,28 +14,35 @@ This document turns the project split into a working repo map.
 ## Owner A - Hanan
 
 Primary responsibility:
-- `apps/api/`
-- `services/rag/`
-- `services/router/`
-- `services/agent/`
-- `packages/contracts/`
+- `infrastructure/postgres/`
+- `infrastructure/vault/`
+- `infrastructure/redis/`
+- `infrastructure/minio/`
+- `apps/api/app/core/`
+- `apps/api/app/db/`
+- `apps/api/app/api/v1/tenants.py`
+- `scripts/verify_isolation.ps1`
 
 First moves:
-1. Define the FastAPI backend boundaries.
-2. Wire tenant-scoped retrieval and the router-first flow.
-3. Keep the agent bounded to the three allowed tools.
+1. Create the tenant data model and the per-request tenant context.
+2. Implement auth, RLS, provisioning, erasure, and audit logging.
+3. Make cross-tenant access fail at the database layer.
 
 ## Owner B - Mohammad
 
 Primary responsibility:
-- `infrastructure/postgres/`
-- `infrastructure/vault/`
-- tenant auth and RLS logic inside the API
+- `services/router/`
+- `services/rag/`
+- `services/agent/`
+- `services/embeddings/`
+- `prompts/`
+- `evals/rag/`
+- `evals/agent/`
 
 First moves:
-1. Create the tenant data model.
-2. Implement role-based access and request-scoped tenant context.
-3. Make cross-tenant access fail at the database layer.
+1. Stand up the router-first flow and the bounded agent loop.
+2. Wire tenant-filtered retrieval and Redis short-term memory.
+3. Build the golden sets for tool selection and retrieval quality.
 
 ## Owner C - Rayan
 

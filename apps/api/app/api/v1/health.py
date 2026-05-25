@@ -5,4 +5,3 @@ Ali Faddel consumes readiness signals in CI and deployment.
 """
 
 # TODO: return liveness, readiness, and dependency status.
-
