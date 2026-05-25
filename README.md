@@ -35,3 +35,11 @@ The big rule is simple: Tenant A must never see Tenant B data.
 6. If you are Hanan, follow `docs/HANAN_PLATFORM_SPINE_PLAN.md` first.
 7. Build from the API spine outward.
 8. Protect tenant isolation at every layer.
+
+## Hanan Lane
+
+If you are working on the platform spine:
+- use the `hanan/feat-platform-spine` branch
+- run `make test`
+- run `powershell -ExecutionPolicy Bypass -File scripts/verify_isolation.ps1`
+- keep `tenant_id` in every data path

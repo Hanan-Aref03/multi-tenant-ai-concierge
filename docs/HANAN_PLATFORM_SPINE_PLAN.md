@@ -3,6 +3,7 @@
 Owner: Hanan
 Role: Owner A
 Branch: `hanan/feat-platform-spine`
+Status: implemented and verified
 
 ## Mission
 
@@ -145,14 +146,20 @@ Done when:
 
 ## Hanan Delivery Checklist
 
-- [ ] Tenant schema is defined
-- [ ] Request tenant context is wired
-- [ ] Auth and role boundaries exist
-- [ ] RLS policies are in place
-- [ ] Provisioning and audit logging are documented
-- [ ] Local stack is reproducible
-- [ ] Isolation checks are written
-- [ ] Docs point clearly to the Hanan branch
+- [x] Tenant schema is defined
+- [x] Request tenant context is wired
+- [x] Auth and role boundaries exist
+- [x] RLS policies are in place
+- [x] Provisioning and audit logging are documented
+- [x] Local stack is reproducible
+- [x] Isolation checks are written
+- [x] Docs point clearly to the Hanan branch
+
+## Validation
+
+- `python -m unittest discover -s tests -t . -p "test_*.py"` passes
+- `powershell -ExecutionPolicy Bypass -File scripts/verify_isolation.ps1` passes
+- `python -m compileall apps services tests` passes
 
 ## Hanan File Map
 
@@ -178,4 +185,3 @@ This branch is done when:
 1. The platform spine is clearly documented.
 2. Tenant isolation is enforced by design and verified by tests.
 3. The repo can be used by the next teammate without ambiguity.
-
