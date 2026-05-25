@@ -22,6 +22,7 @@ Primary responsibility:
 - `apps/api/app/db/`
 - `apps/api/app/api/v1/tenants.py`
 - `scripts/verify_isolation.ps1`
+- Execution plan: [docs/HANAN_PLATFORM_SPINE_PLAN.md](HANAN_PLATFORM_SPINE_PLAN.md)
 
 First moves:
 1. Create the tenant data model and the per-request tenant context.
