@@ -30,5 +30,7 @@ The big rule is simple: Tenant A must never see Tenant B data.
 1. Read `.planning/PROJECT.md` to keep the core value in view.
 2. Read `docs/TEAM.md` to see who owns what.
 3. Read `docs/BRANCHING.md` before starting work.
-4. Build from the API spine outward.
-5. Protect tenant isolation at every layer.
+4. Read `docs/BRANCH_PROTECTION.md` before touching GitHub settings.
+5. Read `CONTRIBUTING.md` before committing or pushing.
+6. Build from the API spine outward.
+7. Protect tenant isolation at every layer.

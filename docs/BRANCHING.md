@@ -25,9 +25,13 @@ Use this pattern:
 Examples:
 
 - `hanan/feat-tenant-rls`
+- `hanan/fix-isolation-policy`
 - `mohammad/feat-rag-pipeline`
+- `mohammad/feat-router-agent`
 - `rayan/feat-guardrails`
+- `rayan/test-redteam-gate`
 - `ali/feat-widget-auth`
+- `ali/feat-ci-pipeline`
 
 ## Workflow
 
@@ -47,7 +51,21 @@ Examples:
 - `test` for tests and evals
 - `refactor` for code cleanup without behavior change
 
+## Quality Gate
+
+Before you commit or push:
+
+1. Run the checks relevant to the files you changed.
+2. Fix lint, type, test, or eval failures before staging more work.
+3. Review the diff for accidental file changes.
+4. Make sure no secrets or local-only files are included.
+5. Push only when the branch is green for its scope.
+
 ## Team Rule
 
 If the task is part of the shared project plan, work from `dev`, not `main`.
 
+See also:
+
+- [CONTRIBUTING.md](../CONTRIBUTING.md)
+- [docs/BRANCH_PROTECTION.md](BRANCH_PROTECTION.md)
