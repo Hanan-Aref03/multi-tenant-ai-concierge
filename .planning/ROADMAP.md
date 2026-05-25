@@ -3,6 +3,7 @@
 **Execution style:** Standard/horizontal layering with vertical validation at each step.
 **Cadence:** 5-day sprint aligned to the brief's Monday-through-Friday build window.
 **Team principle:** One primary owner per phase, with at least one supporting reviewer from another discipline.
+**Owner map:** Owner A = Hanan, Owner B = Mohammad, Owner C = Rayan, Owner D = Ali Faddel.
 
 | # | Phase | Day | Lead | Goal | Requirements |
 |---|-------|-----|------|------|--------------|

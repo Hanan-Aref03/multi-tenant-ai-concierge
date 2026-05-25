@@ -6,12 +6,12 @@ The big rule is simple: Tenant A must never see Tenant B data.
 
 ## Team Ownership
 
-| Member | Primary Areas | First Things To Build |
-|--------|---------------|-----------------------|
-| Hanan | `apps/api/`, `services/rag/`, `services/router/`, `services/agent/`, `packages/contracts/` | Backend architecture, tenant-safe API contracts, retrieval pipeline, router/agent split |
-| Mohammad | `infrastructure/postgres/`, `infrastructure/vault/`, `services/security/` concepts inside API | Auth, RLS, tenant provisioning, audit logging, secrets, rate limits |
-| Rayan | `apps/modelserver/`, `services/guardrails/`, `evals/`, `tests/security/` | Classifier, guardrails, red-team evals, redaction, model-serving checks |
-| Ali Faddel | `apps/widget/`, `apps/admin/`, `.github/workflows/`, `scripts/` | Widget UI, admin dashboard, CI/CD, bootstrap scripts, release automation |
+| Owner | Member | Primary Areas | First Things To Build |
+|-------|--------|---------------|-----------------------|
+| Owner A | Hanan | `apps/api/`, `services/rag/`, `services/router/`, `services/agent/`, `packages/contracts/` | Backend architecture, tenant-safe API contracts, retrieval pipeline, router/agent split |
+| Owner B | Mohammad | `infrastructure/postgres/`, `infrastructure/vault/`, `services/security/` concepts inside API | Auth, RLS, tenant provisioning, audit logging, secrets, rate limits |
+| Owner C | Rayan | `apps/modelserver/`, `services/guardrails/`, `evals/`, `tests/security/` | Classifier, guardrails, red-team evals, redaction, model-serving checks |
+| Owner D | Ali Faddel | `apps/widget/`, `apps/admin/`, `.github/workflows/`, `scripts/` | Widget UI, admin dashboard, CI/CD, bootstrap scripts, release automation |
 
 ## Repository Shape
 
@@ -31,4 +31,3 @@ The big rule is simple: Tenant A must never see Tenant B data.
 2. Read `docs/TEAM.md` to see who owns what.
 3. Build from the API spine outward.
 4. Protect tenant isolation at every layer.
-

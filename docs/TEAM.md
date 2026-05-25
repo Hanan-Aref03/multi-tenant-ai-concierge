@@ -2,7 +2,16 @@
 
 This document turns the project split into a working repo map.
 
-## Hanan
+## Owner Map
+
+| Owner | Team Member |
+|-------|-------------|
+| Owner A | Hanan |
+| Owner B | Mohammad |
+| Owner C | Rayan |
+| Owner D | Ali Faddel |
+
+## Owner A - Hanan
 
 Primary responsibility:
 - `apps/api/`
@@ -16,7 +25,7 @@ First moves:
 2. Wire tenant-scoped retrieval and the router-first flow.
 3. Keep the agent bounded to the three allowed tools.
 
-## Mohammad
+## Owner B - Mohammad
 
 Primary responsibility:
 - `infrastructure/postgres/`
@@ -28,7 +37,7 @@ First moves:
 2. Implement role-based access and request-scoped tenant context.
 3. Make cross-tenant access fail at the database layer.
 
-## Rayan
+## Owner C - Rayan
 
 Primary responsibility:
 - `apps/modelserver/`
@@ -41,7 +50,7 @@ First moves:
 2. Define platform guardrails and redaction rules.
 3. Build eval gates that can block regressions.
 
-## Ali Faddel
+## Owner D - Ali Faddel
 
 Primary responsibility:
 - `apps/widget/`
@@ -57,4 +66,3 @@ First moves:
 ## Shared Rule
 
 Everyone reviews the tenant isolation path before merging anything.
-

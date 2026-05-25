@@ -34,6 +34,7 @@ Tenant A must never be able to access Tenant B data, even if a developer forgets
 ## Context
 
 - Shared repo for a team of four: Hanan (architecture + AI integration), Mohammad (backend + security), Rayan (ML + guardrails), and Ali Faddel (frontend + widget + CI/CD).
+- Brief owner mapping: Owner A = Hanan, Owner B = Mohammad, Owner C = Rayan, Owner D = Ali Faddel.
 - The project brief explicitly centers tenant isolation: RLS, tenant-scoped pgvector, signed widget tokens, per-tenant origin checks, audit logs, and PII redaction.
 - Recommended stack from the brief: FastAPI, React + Vite widget, Streamlit admin, PostgreSQL, pgvector, Redis, MinIO, Vault, OpenAI APIs, NeMo Guardrails, GitHub Actions, and Docker Compose.
 - Deadline pressure is high: the brief is structured around a five-day build and Friday demo, so the plan should prioritize end-to-end slices over perfect layering.
