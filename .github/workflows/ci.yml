@@ -1,0 +1,11 @@
+name: ci
+
+# Ali Faddel owns CI wiring.
+# Everyone depends on this gate before merge.
+
+on:
+  push:
+  pull_request:
+
+jobs: {}
+

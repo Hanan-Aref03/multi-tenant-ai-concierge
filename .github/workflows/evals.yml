@@ -1,0 +1,10 @@
+name: evals
+
+# Rayan owns eval gating.
+# Hanan uses the results to tune router and retrieval behavior.
+
+on:
+  workflow_dispatch:
+
+jobs: {}
+

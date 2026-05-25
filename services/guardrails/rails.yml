@@ -1,0 +1,4 @@
+# Rayan owns the platform rails.
+# These rails must stay stricter than any tenant-specific configuration.
+# TODO: define prompt injection, jailbreak, cross-tenant refusal, and PII redaction rules.
+

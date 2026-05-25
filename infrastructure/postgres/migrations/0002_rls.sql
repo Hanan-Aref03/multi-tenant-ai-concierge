@@ -1,0 +1,3 @@
+-- Mohammad owns the Row Level Security policies.
+-- TODO: add per-table tenant_id policies and request-scoped app.tenant_id checks.
+

@@ -1,0 +1,10 @@
+name: release
+
+# Ali Faddel owns release automation.
+# Mohammad and Hanan must confirm security and API readiness.
+
+on:
+  workflow_dispatch:
+
+jobs: {}
+

@@ -1,0 +1,8 @@
+# Local development stack for the concierge platform.
+# Mohammad owns: postgres, redis, vault, minio, and tenant-safe infrastructure.
+# Hanan owns: api and internal service wiring.
+# Ali Faddel owns: widget and admin app container wiring.
+# Rayan owns: modelserver and eval containers.
+
+services: {}
+
