@@ -11,7 +11,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from minio import Minio
+try:
+    from minio import Minio
+except ImportError:  # pragma: no cover - optional local dependency
+    Minio = None  # type: ignore[assignment]
 
 from apps.api.app.services.rag_service import index_document, delete_document_index
 
@@ -82,6 +85,8 @@ _minio_client = None
 def get_minio_client() -> Minio:
     """Return a singleton MinIO client instance."""
     global _minio_client
+    if Minio is None:
+        raise RuntimeError("minio package is not installed")
     if _minio_client is None:
         _minio_client = Minio(
             MINIO_ENDPOINT,
