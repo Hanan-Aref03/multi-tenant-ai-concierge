@@ -6,7 +6,7 @@ Rayan owns the model server implementation that satisfies it.
 --- CONTRACT SUMMARY ---
 
 POST /classify
-  Request:  { "text": "<user message>" }
+  Request:  { "tenant_id": "<tenant>", "message": "<user message>" }
   Response: { "intent": "<one of VALID_INTENTS>", "confidence": <float 0-1> }
   Errors:   422 on missing/invalid input; 503 if model artifact failed integrity check
 
@@ -62,7 +62,8 @@ IntentLiteral = Literal[
 @dataclass
 class ClassifyRequest:
     """Request body for POST /classify."""
-    text: str
+    tenant_id: str
+    message: str
 
 
 @dataclass

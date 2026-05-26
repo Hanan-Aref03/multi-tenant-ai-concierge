@@ -39,6 +39,37 @@ function Invoke-InDirectory {
     }
 }
 
+function Invoke-WithWorkspaceTemp {
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$Action
+    )
+
+    $tempRoot = Join-Path $root ("tmp\pytest-" + [guid]::NewGuid().ToString("N"))
+    New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
+
+    $originalTemp = $env:TEMP
+    $originalTmp = $env:TMP
+    $originalTmpDir = $env:TMPDIR
+
+    $env:TEMP = $tempRoot
+    $env:TMP = $tempRoot
+    $env:TMPDIR = $tempRoot
+
+    try {
+        & $Action
+        if ($LASTEXITCODE -ne 0) {
+            throw "Command failed with exit code $LASTEXITCODE"
+        }
+    }
+    finally {
+        if ($null -ne $originalTemp) { $env:TEMP = $originalTemp } else { Remove-Item Env:TEMP -ErrorAction SilentlyContinue }
+        if ($null -ne $originalTmp) { $env:TMP = $originalTmp } else { Remove-Item Env:TMP -ErrorAction SilentlyContinue }
+        if ($null -ne $originalTmpDir) { $env:TMPDIR = $originalTmpDir } else { Remove-Item Env:TMPDIR -ErrorAction SilentlyContinue }
+        Remove-Item -LiteralPath $tempRoot -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
 Invoke-Step -Name "Compile Python sources" -Action {
     python -m compileall apps services tests backend admin
 }
@@ -48,30 +79,38 @@ Invoke-Step -Name "Run root unittest suite" -Action {
 }
 
 Invoke-Step -Name "Run root pytest suite" -Action {
-    python -m pytest tests -q -p no:cacheprovider
+    Invoke-WithWorkspaceTemp -Action {
+        python -m pytest tests -q -p no:cacheprovider
+    }
 }
 
 Invoke-Step -Name "Run backend pytest suite" -Action {
-    Invoke-InDirectory -Path "backend" -Action {
-        $env:PYTHONPATH = "."
-        try {
-            python -m pytest tests -q -p no:cacheprovider
-        }
-        finally {
-            Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
+    Invoke-WithWorkspaceTemp -Action {
+        Invoke-InDirectory -Path "backend" -Action {
+            $env:PYTHONPATH = "."
+            try {
+                python -m pytest tests -q -p no:cacheprovider
+            }
+            finally {
+                Remove-Item Env:PYTHONPATH -ErrorAction SilentlyContinue
+            }
         }
     }
 }
 
 Invoke-Step -Name "Run widget lint" -Action {
-    Invoke-InDirectory -Path "widget" -Action {
-        npm run lint
+    $widgetPath = Join-Path $root "widget"
+    docker run --rm -v "${widgetPath}:/widget" -w /widget node:20-alpine sh -lc "npm ci && npm run lint"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Widget lint failed with exit code $LASTEXITCODE"
     }
 }
 
 Invoke-Step -Name "Run widget build and size gate" -Action {
-    Invoke-InDirectory -Path "widget" -Action {
-        npm run size
+    $widgetPath = Join-Path $root "widget"
+    docker run --rm -v "${widgetPath}:/widget" -w /widget node:20-alpine sh -lc "npm ci && npm run size"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Widget build and size gate failed with exit code $LASTEXITCODE"
     }
 }
 

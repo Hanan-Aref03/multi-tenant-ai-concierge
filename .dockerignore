@@ -3,6 +3,9 @@
 .planning
 .cache
 .pytest_cache
+specs/
+.claude/
+.specify/
 **/__pycache__/
 **/*.pyc
 **/*.pyo

@@ -11,6 +11,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
+from apps.shared.service_auth import get_service_token
 from services.tracing import span
 
 logger = logging.getLogger(__name__)
@@ -63,15 +64,21 @@ class RouteResult:
 # ---------------------------------------------------------------------------
 
 
-async def _call_classifier_server(message: str, classifier_url: str) -> Optional[ClassifyResult]:
+async def _call_classifier_server(
+    tenant_id: str,
+    message: str,
+    classifier_url: str,
+) -> Optional[ClassifyResult]:
     """Call Rayan's model server POST /classify. Returns None if unavailable."""
     try:
         import httpx
 
+        service_token = get_service_token()
         async with httpx.AsyncClient(timeout=3.0) as client:
             resp = await client.post(
                 f"{classifier_url.rstrip('/')}/classify",
-                json={"text": message},
+                headers={"Authorization": f"Bearer {service_token}"},
+                json={"tenant_id": tenant_id, "message": message},
             )
             resp.raise_for_status()
             data = resp.json()
@@ -148,6 +155,7 @@ async def _classify_via_llm(
 
 
 async def classify_intent(
+    tenant_id: str,
     message: str,
     conversation_history: List[Dict],
     classifier_url: Optional[str],
@@ -162,7 +170,7 @@ async def classify_intent(
     3. Fallback to knowledge_search with 0.0 confidence → agent handles it.
     """
     if classifier_url:
-        result = await _call_classifier_server(message, classifier_url)
+        result = await _call_classifier_server(tenant_id, message, classifier_url)
         if result:
             return result
 
@@ -285,7 +293,7 @@ async def route(
     # 1. Classify --------------------------------------------------------
     with span("router.classify", tenant_id=tenant_id, session_id=session_id) as s:
         classification = await classify_intent(
-            message, conversation_history, classifier_url, llm_client
+            tenant_id, message, conversation_history, classifier_url, llm_client
         )
         s.set_attribute("intent", classification.intent)
         s.set_attribute("confidence", str(classification.confidence))
