@@ -22,7 +22,7 @@ class ClassifyResponse(BaseModel):
 
 
 def classify_stub(request_id: str, _: ClassifyRequest) -> ClassifyResponse:
-    """Return a safe placeholder until exported classifier artifacts exist."""
+    """Return the current fallback routing contract."""
 
     return ClassifyResponse(
         request_id=request_id,

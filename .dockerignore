@@ -1,40 +1,21 @@
-# Git
-.git/
-.gitignore
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-.venv/
-venv/
-
-# Node
-widget/node_modules/
+.git
+.github
+.planning
+.cache
+.pytest_cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.pytest_cache/
+**/pytest-cache-files-*/
+.venv
+venv
+env
+node_modules/
+**/node_modules/
+widget/dist/
 widget/.vite/
-
-# Secrets
-.env
-.env.*
-*.key
-*.pem
-
-# Logs
-*.log
-logs/
-
-# Test artifacts
-.pytest_cache/
-htmlcov/
+dist/
 coverage/
-
-# Model artifacts (too large for image — mounted or downloaded at runtime)
-*.onnx
-*.joblib
-*.pkl
-model_artifacts/
-
-# Docs
-*.md
-docs/
-specs/
+*.log

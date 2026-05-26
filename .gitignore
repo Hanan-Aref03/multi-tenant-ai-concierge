@@ -4,6 +4,8 @@ __pycache__/
 *.pyo
 *.pyd
 .pytest_cache/
+pytest-cache-files-*/
+backend/pytest-cache-files-*/
 .ruff_cache/
 .mypy_cache/
 .venv/
@@ -33,6 +35,7 @@ Thumbs.db
 build/
 tmp/
 temp/
+evals/*/eval_results.json
 
 # Personal working files
 MOHAMMAD_STEPS.md

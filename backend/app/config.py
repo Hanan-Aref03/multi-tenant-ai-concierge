@@ -1,6 +1,8 @@
-"""Application settings — reads from environment variables."""
+"""Application settings - reads from environment variables."""
+
 from functools import lru_cache
-from pydantic_settings import BaseSettings
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -12,9 +14,7 @@ class Settings(BaseSettings):
     vault_token: str = ""
     openai_api_key: str = ""
 
-    class Config:
-        env_file = ".env"
-        extra = "ignore"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
 @lru_cache
