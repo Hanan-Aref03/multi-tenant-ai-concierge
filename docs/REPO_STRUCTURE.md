@@ -1,6 +1,20 @@
 # Repository Structure
 
-This is the recommended full repository layout for the concierge project.
+This is the current repository map, organized around the runnable surfaces first and the source slices second.
+
+## Active Runtime Surfaces
+
+- `backend/` - current API runtime and widget bundle host
+- `admin/` - current Streamlit admin runtime
+- `widget/` - standalone React widget package and Docker image
+- `apps/modelserver/` - Rayan's model-server shell and Docker image
+- `apps/guardrails/` - Rayan's guardrails shell and Docker image
+- `apps/api/` - Hanan's platform-spine smoke image
+
+## Source Slices and Refactor Paths
+
+- `apps/widget/` - widget source slice for the longer-term app split
+- `apps/admin/` - admin source slice for the longer-term app split
 
 ```text
 multi-tenant-ai-concierge/
@@ -14,6 +28,7 @@ multi-tenant-ai-concierge/
 |-- docs/
 |   |-- TEAM.md
 |   |-- HANAN_PLATFORM_SPINE_PLAN.md
+|   |-- PROJECT_STATUS.md
 |   `-- REPO_STRUCTURE.md
 |-- apps/
 |   |-- api/
@@ -86,6 +101,7 @@ multi-tenant-ai-concierge/
 |   `-- integration/test_smoke.py
 |-- scripts/
 |   |-- bootstrap.ps1
+|   |-- run_team_checks.ps1
 |   |-- run_evals.ps1
 |   `-- verify_isolation.ps1
 `-- .github/
@@ -101,3 +117,12 @@ multi-tenant-ai-concierge/
 - Owner B / Mohammad: `services/router/`, `services/rag/`, `services/agent/`, `services/embeddings/`, `prompts/`, `evals/rag/`, `evals/agent/`
 - Owner C / Rayan: `apps/modelserver/`, `services/guardrails/`, `evals/classifier/`, `evals/redteam/`, `tests/security/`
 - Owner D / Ali Faddel: `apps/widget/`, `apps/admin/`, `.github/workflows/`, `scripts/`
+
+## Docker Coverage
+
+- `backend/Dockerfile` - legacy API + widget static bundle host
+- `admin/Dockerfile` - Streamlit admin runtime
+- `widget/Dockerfile` - standalone widget runtime image
+- `apps/api/Dockerfile` - platform-spine smoke image
+- `apps/modelserver/Dockerfile` - model-server runtime image
+- `apps/guardrails/Dockerfile` - guardrails runtime image

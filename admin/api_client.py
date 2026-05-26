@@ -1,0 +1,70 @@
+"""Typed API client for Streamlit admin — wraps FastAPI admin endpoints."""
+from typing import Any
+
+import requests
+import streamlit as st
+
+API_BASE = "http://localhost:8000"
+
+
+def _headers() -> dict:
+    token = st.session_state.get("token", "")
+    return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+
+def _handle(res: requests.Response) -> Any:
+    if res.status_code == 401:
+        st.session_state.clear()
+        st.error("Session expired — please sign in again")
+        st.stop()
+    if res.status_code == 403:
+        st.error("Access denied")
+        return None
+    if not res.ok:
+        st.error(f"API error {res.status_code}: {res.text}")
+        return None
+    return res.json()
+
+
+def get_widget_config() -> dict | None:
+    return _handle(requests.get(f"{API_BASE}/api/admin/widget", headers=_headers()))
+
+
+def update_widget_config(greeting: str, accent_colour: str, allowed_origins: list[str]) -> dict | None:
+    return _handle(requests.put(
+        f"{API_BASE}/api/admin/widget",
+        json={"greeting": greeting, "accent_colour": accent_colour, "allowed_origins": allowed_origins},
+        headers=_headers(),
+    ))
+
+
+def get_agent_config() -> dict | None:
+    return _handle(requests.get(f"{API_BASE}/api/admin/config", headers=_headers()))
+
+
+def update_agent_config(
+    agent_persona: str,
+    enabled_tools: list[str],
+    allowed_topics: list[str],
+    blocked_topics: list[str],
+    refusal_tone: str,
+) -> dict | None:
+    return _handle(requests.put(
+        f"{API_BASE}/api/admin/config",
+        json={
+            "agent_persona": agent_persona,
+            "enabled_tools": enabled_tools,
+            "allowed_topics": allowed_topics,
+            "blocked_topics": blocked_topics,
+            "refusal_tone": refusal_tone,
+        },
+        headers=_headers(),
+    ))
+
+
+def get_leads(limit: int = 50, offset: int = 0) -> dict | None:
+    return _handle(requests.get(
+        f"{API_BASE}/api/admin/leads",
+        params={"limit": limit, "offset": offset},
+        headers=_headers(),
+    ))

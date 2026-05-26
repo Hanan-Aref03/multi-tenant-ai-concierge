@@ -66,6 +66,50 @@ services:
     ports:
       - "8200:8200"
 
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: concierge-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-concierge}
+      REDIS_URL: redis://redis:6379
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-in-prod}
+      VAULT_TOKEN: ${VAULT_TOKEN:-change-me}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  admin:
+    build:
+      context: admin
+      dockerfile: Dockerfile
+    container_name: concierge-admin
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      API_BASE_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api-smoke:
     image: python:3.12-slim
     profiles: ["smoke"]

@@ -25,6 +25,27 @@ The big rule is simple: Tenant A must never see Tenant B data.
 - `docs/` - architecture, team ownership, and repo structure notes
 - `.planning/` - project planning artifacts from GSD
 
+## Current Runtime Map
+
+- `backend/` - current API/runtime image used by the legacy compose stack
+- `admin/` - Streamlit admin image for Owner D
+- `widget/` - standalone React widget build and container image
+- `apps/modelserver/` - Rayan's model-server shell and container image
+- `apps/guardrails/` - Rayan's guardrails shell and container image
+- `apps/api/` - Hanan's platform-spine smoke image
+- `apps/widget/` and `apps/admin/` - source slices for the longer-term refactor path
+
+## Team Checks
+
+Run the full local verification bundle with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_team_checks.ps1
+```
+
+When that finishes cleanly, the branch is in good shape for review.
+For the current completion estimate, see [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md).
+
 ## Start Here
 
 1. Read `.planning/PROJECT.md` to keep the core value in view.
