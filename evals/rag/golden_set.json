@@ -1,0 +1,107 @@
+[
+  {
+    "id": "qa_01",
+    "query": "What are your standard business support hours?",
+    "expected_content_id": "doc_support_policy",
+    "expected_keywords": ["9:00 AM", "5:00 PM", "Monday to Friday"],
+    "content_type": "faq"
+  },
+  {
+    "id": "qa_02",
+    "query": "Do you offer support on weekends?",
+    "expected_content_id": "doc_support_policy",
+    "expected_keywords": ["emergency support", "SLA", "premium plan"],
+    "content_type": "faq"
+  },
+  {
+    "id": "qa_03",
+    "query": "How do I request a deletion of my account data?",
+    "expected_content_id": "doc_privacy_policy",
+    "expected_keywords": ["privacy@acme.com", "30 days", "deletion request"],
+    "content_type": "policy"
+  },
+  {
+    "id": "qa_04",
+    "query": "What security compliance certifications do you hold?",
+    "expected_content_id": "doc_security_compliance",
+    "expected_keywords": ["SOC 2 Type II", "ISO 27001", "HIPAA"],
+    "content_type": "doc"
+  },
+  {
+    "id": "qa_05",
+    "query": "Can I cancel my monthly subscription at any time?",
+    "expected_content_id": "doc_billing_faq",
+    "expected_keywords": ["cancel", "no refunds", "billing cycle"],
+    "content_type": "faq"
+  },
+  {
+    "id": "qa_06",
+    "query": "What is the maximum limit on file uploads?",
+    "expected_content_id": "doc_platform_limits",
+    "expected_keywords": ["100MB", "per file", "attachment"],
+    "content_type": "doc"
+  },
+  {
+    "id": "qa_07",
+    "query": "Do you provide custom developer API integration services?",
+    "expected_content_id": "doc_services_catalog",
+    "expected_keywords": ["consulting", "custom API", "onboarding"],
+    "content_type": "service"
+  },
+  {
+    "id": "qa_08",
+    "query": "What is your uptime service level agreement?",
+    "expected_content_id": "doc_sla_policy",
+    "expected_keywords": ["99.9%", "credit", "downtime"],
+    "content_type": "policy"
+  },
+  {
+    "id": "qa_09",
+    "query": "How can I update my billing email address?",
+    "expected_content_id": "doc_billing_faq",
+    "expected_keywords": ["settings", "billing info", "invoice"],
+    "content_type": "faq"
+  },
+  {
+    "id": "qa_10",
+    "query": "Do you store password hashes securely?",
+    "expected_content_id": "doc_security_compliance",
+    "expected_keywords": ["bcrypt", "salted", "password encryption"],
+    "content_type": "doc"
+  },
+  {
+    "id": "qa_11",
+    "query": "What is the training duration for standard package onboarding?",
+    "expected_content_id": "doc_services_catalog",
+    "expected_keywords": ["2 hours", "onboarding sessions", "video training"],
+    "content_type": "service"
+  },
+  {
+    "id": "qa_12",
+    "query": "Where is my data hosted physically?",
+    "expected_content_id": "doc_privacy_policy",
+    "expected_keywords": ["AWS", "US-East", "Frankfurt"],
+    "content_type": "policy"
+  },
+  {
+    "id": "qa_13",
+    "query": "Who is eligible for the enterprise discount?",
+    "expected_content_id": "doc_billing_faq",
+    "expected_keywords": ["annual plan", "50 seats", "sales team"],
+    "content_type": "faq"
+  },
+  {
+    "id": "qa_14",
+    "query": "How do you handle security vulnerability disclosures?",
+    "expected_content_id": "doc_security_compliance",
+    "expected_keywords": ["security@acme.com", "responsible disclosure", "bug bounty"],
+    "content_type": "doc"
+  },
+  {
+    "id": "qa_15",
+    "query": "Is there a charge for migrating from a competitor?",
+    "expected_content_id": "doc_services_catalog",
+    "expected_keywords": ["free migration", "assisted transfer", "first month"],
+    "content_type": "service"
+  }
+]
