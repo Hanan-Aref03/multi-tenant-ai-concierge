@@ -15,6 +15,6 @@ This repository is building a secure multi-tenant AI concierge SaaS. The priorit
 
 ## Working Rules
 
-- Read `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`, and `.planning/ROADMAP.md` before changing implementation details.
+- Read `docs/ARCHITECTURE_AND_WORKFLOW.md`, `docs/TEAM.md`, `.planning/PROJECT.md`, `.planning/REQUIREMENTS.md`, and `.planning/ROADMAP.md` before changing implementation details.
 - Put prompts in `prompts/`, evals in `evals/`, and tests in `tests/`.
 - When in doubt, optimize for security, traceability, and demo reliability.

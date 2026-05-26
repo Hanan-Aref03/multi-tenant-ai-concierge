@@ -1,115 +1,28 @@
 # Repository Structure
 
-This is the current repository map, organized around the runnable surfaces first and the source slices second.
+This is the simple repository map. The canonical workflow guide is [docs/ARCHITECTURE_AND_WORKFLOW.md](ARCHITECTURE_AND_WORKFLOW.md).
 
-## Active Runtime Surfaces
+## Top-Level Layout
 
+- `apps/` - deployable app slices and runtime entrypoints
+  - `api/` - platform-spine smoke image
+  - `widget/` - widget source slice for the future app split
+  - `admin/` - admin source slice for the future app split
+  - `modelserver/` - model-serving shell
+  - `guardrails/` - guardrails shell
 - `backend/` - current API runtime and widget bundle host
 - `admin/` - current Streamlit admin runtime
 - `widget/` - standalone React widget package and Docker image
-- `apps/modelserver/` - Rayan's model-server shell and Docker image
-- `apps/guardrails/` - Rayan's guardrails shell and Docker image
-- `apps/api/` - Hanan's platform-spine smoke image
-
-## Source Slices and Refactor Paths
-
-- `apps/widget/` - widget source slice for the longer-term app split
-- `apps/admin/` - admin source slice for the longer-term app split
-
-```text
-multi-tenant-ai-concierge/
-|-- README.md
-|-- AGENTS.md
-|-- .env.example
-|-- .gitignore
-|-- Makefile
-|-- docker-compose.yml
-|-- .planning/
-|-- docs/
-|   |-- TEAM.md
-|   |-- HANAN_PLATFORM_SPINE_PLAN.md
-|   |-- PROJECT_STATUS.md
-|   `-- REPO_STRUCTURE.md
-|-- apps/
-|   |-- api/
-|   |   |-- app/main.py
-|   |   |-- app/core/config.py
-|   |   |-- app/core/security.py
-|   |   |-- app/core/tenant_context.py
-|   |   |-- app/api/router.py
-|   |   |-- app/api/v1/health.py
-|   |   |-- app/api/v1/tenants.py
-|   |   |-- app/api/v1/content.py
-|   |   |-- app/api/v1/widget.py
-|   |   |-- app/api/v1/conversations.py
-|   |   |-- app/db/session.py
-|   |   |-- app/db/models/tenant.py
-|   |   |-- app/db/models/content.py
-|   |   |-- app/db/models/conversation.py
-|   |   |-- app/db/models/lead.py
-|   |   |-- app/services/audit_service.py
-|   |   |-- app/services/agent_service.py
-|   |   `-- app/services/rag_service.py
-|   |-- widget/
-|   |   |-- src/main.tsx
-|   |   |-- src/App.tsx
-|   |   |-- src/components/ChatWidget.tsx
-|   |   `-- src/lib/api.ts
-|   |-- admin/
-|   |   |-- app.py
-|   |   |-- pages/Dashboard.py
-|   |   |-- pages/Tenants.py
-|   |   |-- pages/Knowledge.py
-|   |   `-- pages/Guardrails.py
-|   `-- modelserver/
-|       |-- app/main.py
-|       |-- app/classifier.py
-|       |-- app/artifacts.py
-|       `-- app/metrics.py
-|-- services/
-|   |-- router/router.py
-|   |-- rag/chunking.py
-|   |-- rag/retrieval.py
-|   |-- agent/agent.py
-|   |-- agent/tools.py
-|   |-- guardrails/rails.yml
-|   |-- guardrails/redaction.py
-|   `-- embeddings/client.py
-|-- infrastructure/
-|   |-- docker/README.md
-|   |-- postgres/migrations/0001_init.sql
-|   |-- postgres/migrations/0002_rls.sql
-|   |-- redis/config/redis.conf
-|   |-- vault/policies/tenant.hcl
-|   `-- minio/buckets.md
-|-- packages/
-|   `-- contracts/openapi.yaml
-|-- prompts/
-|   |-- system/base.md
-|   |-- router/intent_classifier.md
-|   |-- agent/tool_use.md
-|   `-- guardrails/platform.md
-|-- evals/
-|   |-- classifier/metrics.md
-|   |-- rag/metrics.md
-|   |-- agent/metrics.md
-|   |-- redteam/prompts.md
-|   `-- release/checklist.md
-|-- tests/
-|   |-- security/test_tenant_isolation.py
-|   |-- widget/test_widget_token.py
-|   `-- integration/test_smoke.py
-|-- scripts/
-|   |-- bootstrap.ps1
-|   |-- run_team_checks.ps1
-|   |-- run_evals.ps1
-|   `-- verify_isolation.ps1
-`-- .github/
-    `-- workflows/
-        |-- ci.yml
-        |-- evals.yml
-        `-- release.yml
-```
+- `services/` - shared domain logic for routing, RAG, agent, guardrails, and embeddings
+- `infrastructure/` - migrations, Redis/Vault/MinIO notes, and Docker guidance
+- `packages/` - shared contracts and interfaces
+- `prompts/` - prompt assets
+- `evals/` - quality gates and red-team suites
+- `tests/` - automated verification
+- `scripts/` - bootstrap and verification scripts
+- `docs/` - stable human-readable docs
+- `.planning/` - project state and roadmap
+- `.github/workflows/` - CI, eval, and release automation
 
 ## Ownership
 

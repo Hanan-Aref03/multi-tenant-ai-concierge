@@ -15,6 +15,7 @@ See: .planning/PROJECT.md (updated 2026-05-25)
 - config.json set for a standard, parallel-friendly plan
 - AGENTS.md added for follow-on work
 - Hanan platform spine code, SQL, and verification suite implemented
+- Repository guidance consolidated into `docs/ARCHITECTURE_AND_WORKFLOW.md` and `.planning/`; the legacy SpecKit workspace has been retired.
 
 ## Notes
 
