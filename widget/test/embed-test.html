@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Widget Embed Test</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 40px; background: #F9FAFB; }
+    h1 { color: #111; }
+    .instructions { background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; max-width: 600px; }
+    code { background: #F3F4F6; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem; }
+    .note { color: #6B7280; font-size: 0.875rem; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Concierge Widget — Embed Test</h1>
+  <div class="instructions">
+    <p>This page tests the full embed flow:</p>
+    <ol>
+      <li>Loader reads <code>data-widget-id</code></li>
+      <li>POSTs to <code>/api/widget/token</code> with this page's origin</li>
+      <li>Backend validates origin against DB allowlist</li>
+      <li>JWT issued → iframe injected → chat UI appears</li>
+    </ol>
+    <p class="note">
+      To test the allowed-origin path: add <code>http://localhost:5500</code> (or wherever you
+      serve this file) to your widget's <code>allowed_origins</code> via the admin page.
+    </p>
+    <p class="note">
+      To test the blocked-origin path: remove this origin from <code>allowed_origins</code>.
+      The widget should fail silently — this page must not break.
+    </p>
+  </div>
+
+  <!--
+    Replace WIDGET_ID_HERE with a real widget_id from your seeded data.
+    data-api-base defaults to window.location.origin; override for cross-origin testing.
+  -->
+  <script
+    src="http://localhost:8000/widget.js"
+    data-widget-id="WIDGET_ID_HERE"
+    data-api-base="http://localhost:8000"
+  ></script>
+</body>
+</html>

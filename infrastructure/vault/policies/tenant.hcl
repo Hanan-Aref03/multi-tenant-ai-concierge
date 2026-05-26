@@ -1,2 +1,11 @@
-# Hanan owns the Vault policy that protects platform secrets.
-# TODO: limit access to tenant-management and platform-service paths only.
+path "secret/data/platform/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}
+
+path "secret/data/tenants/*" {
+  capabilities = ["read", "list"]
+}
+
+path "secret/data/tenants/{{identity.entity.id}}/*" {
+  capabilities = ["create", "read", "update", "delete", "list"]
+}

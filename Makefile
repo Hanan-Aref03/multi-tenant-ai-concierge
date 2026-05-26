@@ -3,26 +3,28 @@
 # Rayan: use these targets when running evals and guardrail checks.
 # Ali Faddel: use these targets when iterating on widget/admin CI and release tasks.
 
-.PHONY: help bootstrap lint test eval fmt clean
+.PHONY: help bootstrap lint test eval fmt clean verify-isolation
 
 help:
-	@echo "Available targets: bootstrap, lint, test, eval, fmt, clean"
+	@echo "Available targets: bootstrap, lint, test, eval, fmt, clean, verify-isolation"
 
 bootstrap:
-	@echo "TODO: install dependencies and initialize local services"
+	docker compose up -d postgres redis minio vault
 
 lint:
-	@echo "TODO: run linters"
+	python -m compileall apps services tests
 
 test:
-	@echo "TODO: run automated tests"
+	python -m unittest discover -s tests -t . -p "test_*.py"
 
 eval:
-	@echo "TODO: run model, RAG, and red-team evals"
+	powershell -ExecutionPolicy Bypass -File scripts/verify_isolation.ps1
 
 fmt:
-	@echo "TODO: format code"
+	@echo "Formatters are deferred until the Python packaging layer lands."
+
+verify-isolation:
+	powershell -ExecutionPolicy Bypass -File scripts/verify_isolation.ps1
 
 clean:
-	@echo "TODO: remove generated artifacts"
-
+	@echo "Remove local build artifacts manually when needed."

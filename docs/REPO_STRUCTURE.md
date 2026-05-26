@@ -13,6 +13,7 @@ multi-tenant-ai-concierge/
 |-- .planning/
 |-- docs/
 |   |-- TEAM.md
+|   |-- HANAN_PLATFORM_SPINE_PLAN.md
 |   `-- REPO_STRUCTURE.md
 |-- apps/
 |   |-- api/

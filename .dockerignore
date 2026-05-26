@@ -1,0 +1,40 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Node
+widget/node_modules/
+widget/.vite/
+
+# Secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Logs
+*.log
+logs/
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+coverage/
+
+# Model artifacts (too large for image — mounted or downloaded at runtime)
+*.onnx
+*.joblib
+*.pkl
+model_artifacts/
+
+# Docs
+*.md
+docs/
+specs/
