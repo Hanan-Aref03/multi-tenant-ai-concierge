@@ -9,6 +9,7 @@ from typing import List, Dict, Any, Optional
 
 from services.rag.chunking import process_document
 from services.rag.retrieval import retrieve, rerank
+from apps.shared.llm_client import get_chat_model
 from services.embeddings.client import get_embedding_client
 from services.tracing import span
 
@@ -141,7 +142,7 @@ async def answer_from_knowledge(
         if llm_client:
             try:
                 response = await llm_client.chat.completions.create(
-                    model="gpt-4.1-mini",
+                    model=get_chat_model(),
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": question},

@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
+from apps.shared.llm_client import build_llm_client
 from apps.api.app.services.agent_service import process_message
 
 logger = logging.getLogger(__name__)
@@ -101,19 +102,12 @@ def _get_redis():
 
 
 def _get_llm():
-    """Return a cached async OpenAI client, or None if unconfigured."""
+    """Return a cached async LLM client, or None if unconfigured."""
     global _llm
     if _llm is None:
-        try:
-            import openai  # type: ignore[import]
-
-            api_key = os.getenv("OPENAI_API_KEY", "")
-            if api_key:
-                _llm = openai.AsyncOpenAI(api_key=api_key)
-            else:
-                logger.warning("OPENAI_API_KEY not set; LLM client disabled")
-        except Exception as exc:  # pragma: no cover
-            logger.warning("OpenAI client unavailable: %s", exc)
+        _llm = build_llm_client()
+        if _llm is None:
+            logger.warning("No Gemini/OpenAI LLM client configured; LLM disabled")
     return _llm
 
 

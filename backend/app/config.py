@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     cors_cache_ttl_seconds: int = 60
     vault_token: str = ""
     openai_api_key: str = ""
+    gemini_api_key: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

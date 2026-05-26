@@ -71,7 +71,7 @@ async def exchange_token(
     )
 
     # 4. Audit record
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).replace(tzinfo=None)
     session = WidgetSession(
         tenant_id=widget.tenant_id,
         widget_id=widget.id,
