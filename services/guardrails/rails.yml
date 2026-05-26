@@ -1,4 +1,17 @@
 # Rayan owns the platform rails.
 # These rails must stay stricter than any tenant-specific configuration.
-# TODO: define prompt injection, jailbreak, cross-tenant refusal, and PII redaction rules.
-
+platform_rules:
+  immutable: true
+  block:
+    - prompt_injection
+    - jailbreak
+    - prompt_disclosure
+    - cross_tenant_data_access
+redaction:
+  pii:
+    - email
+    - phone
+  secrets:
+    - api_key
+    - bearer_token
+    - authorization_token
