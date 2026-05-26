@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field
 
 from apps.shared.service_auth import require_service_token
 from apps.shared.tracing import attach_request_id, resolve_request_id
+from services.guardrails.redaction import redact_text
+from services.guardrails.rules import evaluate_platform_rules
 
 app = FastAPI(title="Concierge Guardrails Sidecar", version="0.1.0")
 
@@ -41,11 +43,13 @@ def check(
     request_id: str = Depends(resolve_request_id),
 ) -> GuardrailsCheckResponse:
     attach_request_id(response, request_id)
+    redaction = redact_text(payload.message)
+    guardrail = evaluate_platform_rules(payload.message)
 
     return GuardrailsCheckResponse(
         request_id=request_id,
-        allowed=False,
-        decision="blocked_stub",
-        reason="Guardrails policy evaluation is not implemented yet.",
-        redacted_message="",
+        allowed=guardrail.allowed,
+        decision=guardrail.decision,
+        reason=guardrail.reason,
+        redacted_message=redaction.text,
     )
