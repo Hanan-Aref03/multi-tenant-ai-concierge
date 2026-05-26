@@ -26,7 +26,7 @@ def load_thresholds(path: str) -> dict:
     if not p.exists():
         _config_error(f"Threshold file not found: {path}")
     try:
-        with open(p) as f:
+        with open(p, encoding="utf-8") as f:
             data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         _config_error(f"Malformed YAML in {path}: {e}")
