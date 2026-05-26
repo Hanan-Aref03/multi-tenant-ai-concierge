@@ -70,6 +70,23 @@ function Invoke-WithWorkspaceTemp {
     }
 }
 
+function Invoke-WidgetDockerStep {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Command
+    )
+
+    $widgetPath = Join-Path $root "widget"
+    docker run --rm `
+        -v "${widgetPath}:/widget" `
+        -v "concierge-widget-node-modules:/widget/node_modules" `
+        -w /widget `
+        node:20-alpine sh -lc "npm ci --no-audit --no-fund && $Command"
+    if ($LASTEXITCODE -ne 0) {
+        throw "Widget step failed with exit code $LASTEXITCODE"
+    }
+}
+
 Invoke-Step -Name "Compile Python sources" -Action {
     python -m compileall apps services tests backend admin
 }
@@ -99,19 +116,11 @@ Invoke-Step -Name "Run backend pytest suite" -Action {
 }
 
 Invoke-Step -Name "Run widget lint" -Action {
-    $widgetPath = Join-Path $root "widget"
-    docker run --rm -v "${widgetPath}:/widget" -w /widget node:20-alpine sh -lc "npm ci && npm run lint"
-    if ($LASTEXITCODE -ne 0) {
-        throw "Widget lint failed with exit code $LASTEXITCODE"
-    }
+    Invoke-WidgetDockerStep -Command "npm run lint"
 }
 
 Invoke-Step -Name "Run widget build and size gate" -Action {
-    $widgetPath = Join-Path $root "widget"
-    docker run --rm -v "${widgetPath}:/widget" -w /widget node:20-alpine sh -lc "npm ci && npm run size"
-    if ($LASTEXITCODE -ne 0) {
-        throw "Widget build and size gate failed with exit code $LASTEXITCODE"
-    }
+    Invoke-WidgetDockerStep -Command "npm run size"
 }
 
 Invoke-Step -Name "Verify tenant isolation rules" -Action {
