@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
 from apps.shared.service_auth import get_service_token
+from apps.shared.llm_client import get_chat_model
 from services.tracing import span
 
 logger = logging.getLogger(__name__)
@@ -129,7 +130,7 @@ async def _classify_via_llm(
         )
 
         response = await llm_client.chat.completions.create(
-            model="gpt-4.1-mini",
+            model=get_chat_model(),
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_content},

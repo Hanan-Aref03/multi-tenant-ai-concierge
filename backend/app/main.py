@@ -7,7 +7,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api import admin, chat, widget
+from app.database import Base, engine
 from app.middleware.cors_dynamic import DynamicCORSMiddleware
+from app.models import tenant_config as _tenant_config  # noqa: F401
+from app.models import widget as _widget  # noqa: F401
+from app.models import widget_session as _widget_session  # noqa: F401
 
 WIDGET_DIST = Path(__file__).parent.parent.parent / "widget" / "dist"
 WIDGET_PUBLIC = Path(__file__).parent.parent.parent / "widget" / "public"
@@ -15,6 +19,8 @@ WIDGET_PUBLIC = Path(__file__).parent.parent.parent / "widget" / "public"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # type: ignore[type-arg]
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
 
 
