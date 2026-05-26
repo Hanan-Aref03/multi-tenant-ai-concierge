@@ -34,3 +34,6 @@ build/
 tmp/
 temp/
 
+# Personal working files
+MOHAMMAD_STEPS.md
+
