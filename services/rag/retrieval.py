@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 
 from services.embeddings.client import get_embedding_client
+from services.tracing import span
 
 logger = logging.getLogger(__name__)
 
@@ -72,48 +73,51 @@ async def retrieve(
     # 2. Vector search via pgvector ------------------------------------
     sql = """
         SELECT
-            chunk_text,
-            content_id,
+            content   AS chunk_text,
+            document_id AS content_id,
             chunk_index,
             metadata,
             1 - (embedding <=> :query_vec) AS score
-        FROM content_embeddings
+        FROM app.content_chunks
         WHERE tenant_id = :tid
         ORDER BY embedding <=> :query_vec
         LIMIT :k;
     """
 
-    try:
-        from sqlalchemy import text as sa_text
+    with span("rag.retrieve", tenant_id=tenant_id, top_k=top_k) as s:
+        try:
+            from sqlalchemy import text as sa_text
 
-        result = await db_session.execute(
-            sa_text(sql),
-            {
-                "query_vec": str(query_embedding),
-                "tid": tenant_id,
-                "k": top_k,
-            },
-        )
-        rows = result.fetchall()
-    except Exception as exc:
-        logger.error("Vector search failed for tenant=%s: %s", tenant_id, exc)
-        return []
-
-    # 3. Build results & apply threshold --------------------------------
-    results: List[RetrievalResult] = []
-    for row in rows:
-        score = float(row.score)
-        if score < score_threshold:
-            continue
-        results.append(
-            RetrievalResult(
-                chunk_text=row.chunk_text,
-                score=score,
-                content_id=row.content_id,
-                chunk_index=row.chunk_index,
-                metadata=row.metadata if row.metadata else {},
+            result = await db_session.execute(
+                sa_text(sql),
+                {
+                    "query_vec": str(query_embedding),
+                    "tid": tenant_id,
+                    "k": top_k,
+                },
             )
-        )
+            rows = result.fetchall()
+        except Exception as exc:
+            logger.error("Vector search failed for tenant=%s: %s", tenant_id, exc)
+            return []
+
+        # 3. Build results & apply threshold --------------------------------
+        results: List[RetrievalResult] = []
+        for row in rows:
+            score = float(row.score)
+            if score < score_threshold:
+                continue
+            results.append(
+                RetrievalResult(
+                    chunk_text=row.chunk_text,
+                    score=score,
+                    content_id=row.content_id,
+                    chunk_index=row.chunk_index,
+                    metadata=row.metadata if row.metadata else {},
+                )
+            )
+
+        s.set_attribute("result_count", len(results))
 
     logger.info(
         "Retrieval for tenant=%s returned %d results (top_k=%d, threshold=%.2f)",

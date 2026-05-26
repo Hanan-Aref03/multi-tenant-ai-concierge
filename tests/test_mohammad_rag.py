@@ -321,7 +321,7 @@ class TestRAGService(unittest.TestCase):
 # ===================================================================
 # 5. Content API Schema Tests
 # ===================================================================
-@unittest.skipUnless(HAS_FASTAPI, "fastapi/minio not installed locally")
+@unittest.skipUnless(HAS_FASTAPI and HAS_SQLALCHEMY, "fastapi/sqlalchemy/minio not installed locally")
 class TestContentSchemas(unittest.TestCase):
     """Tests for the Pydantic request/response schemas."""
 

@@ -151,20 +151,20 @@ async def upload_content(
     """
     content_id = str(uuid.uuid4())
 
-    # 1. Insert into `content` table, but do NOT commit yet.
+    # 1. Insert into `app.content_documents`, but do NOT commit yet.
     sql_insert = """
-        INSERT INTO content (id, tenant_id, title, body, content_type)
-        VALUES (:id, :tenant_id, :title, :body, :content_type);
+        INSERT INTO app.content_documents (document_id, tenant_id, title, content, kind)
+        VALUES (:document_id, :tenant_id, :title, :content, :kind);
     """
     try:
         await db.execute(
             text(sql_insert),
             {
-                "id": content_id,
+                "document_id": content_id,
                 "tenant_id": tenant_id,
                 "title": payload.title,
-                "body": payload.body,
-                "content_type": payload.content_type,
+                "content": payload.body,
+                "kind": payload.content_type,
             },
         )
     except Exception as e:
@@ -219,16 +219,16 @@ async def update_content(
     - Updates raw text in MinIO
     """
     # 1. Verify existence and tenant ownership
-    check_sql = "SELECT id FROM content WHERE id = :id AND tenant_id = :tenant_id;"
+    check_sql = "SELECT document_id FROM app.content_documents WHERE document_id = :id AND tenant_id = :tenant_id;"
     row = (await db.execute(text(check_sql), {"id": content_id, "tenant_id": tenant_id})).first()
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found or unauthorized")
 
     # 2. Update local DB (no commit yet)
     update_sql = """
-        UPDATE content
-        SET title = :title, body = :body, content_type = :content_type
-        WHERE id = :id AND tenant_id = :tenant_id;
+        UPDATE app.content_documents
+        SET title = :title, content = :content, kind = :kind
+        WHERE document_id = :id AND tenant_id = :tenant_id;
     """
     try:
         await db.execute(
@@ -237,8 +237,8 @@ async def update_content(
                 "id": content_id,
                 "tenant_id": tenant_id,
                 "title": payload.title,
-                "body": payload.body,
-                "content_type": payload.content_type,
+                "content": payload.body,
+                "kind": payload.content_type,
             },
         )
     except Exception as e:
@@ -292,13 +292,13 @@ async def delete_content(
     - Deletes matching MinIO object
     """
     # 1. Verify ownership
-    check_sql = "SELECT id FROM content WHERE id = :id AND tenant_id = :tenant_id;"
+    check_sql = "SELECT document_id FROM app.content_documents WHERE document_id = :id AND tenant_id = :tenant_id;"
     row = (await db.execute(text(check_sql), {"id": content_id, "tenant_id": tenant_id})).first()
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found or unauthorized")
 
-    # 2. Delete from content table
-    delete_sql = "DELETE FROM content WHERE id = :id AND tenant_id = :tenant_id;"
+    # 2. Delete from content_documents table
+    delete_sql = "DELETE FROM app.content_documents WHERE document_id = :id AND tenant_id = :tenant_id;"
     try:
         await db.execute(text(delete_sql), {"id": content_id, "tenant_id": tenant_id})
     except Exception as e:
@@ -334,8 +334,8 @@ async def list_content(
     - Automatically filtered by tenant_id
     """
     sql_list = """
-        SELECT id, tenant_id, title, body, content_type
-        FROM content
+        SELECT document_id AS id, tenant_id, title, content AS body, kind AS content_type
+        FROM app.content_documents
         WHERE tenant_id = :tenant_id
         LIMIT :limit OFFSET :offset;
     """

@@ -1,0 +1,155 @@
+[
+  {
+    "id": "ag_01",
+    "message": "Hello there!",
+    "expected_intent": "greeting",
+    "expected_route": "direct",
+    "expected_tool": null,
+    "scenario_type": "easy",
+    "notes": "Pure greeting — no tools needed."
+  },
+  {
+    "id": "ag_02",
+    "message": "Hi, anyone here?",
+    "expected_intent": "greeting",
+    "expected_route": "direct",
+    "expected_tool": null,
+    "scenario_type": "easy",
+    "notes": "Casual opener — direct reply."
+  },
+  {
+    "id": "ag_03",
+    "message": "Good morning!",
+    "expected_intent": "greeting",
+    "expected_route": "direct",
+    "expected_tool": null,
+    "scenario_type": "easy",
+    "notes": "Greeting — no knowledge lookup required."
+  },
+  {
+    "id": "ag_04",
+    "message": "What are your business hours?",
+    "expected_intent": "faq",
+    "expected_route": "rag",
+    "expected_tool": null,
+    "scenario_type": "easy",
+    "notes": "Simple FAQ — RAG answers without agent loop."
+  },
+  {
+    "id": "ag_05",
+    "message": "How do I cancel my subscription?",
+    "expected_intent": "faq",
+    "expected_route": "rag",
+    "expected_tool": null,
+    "scenario_type": "easy",
+    "notes": "FAQ with direct answer in knowledge base."
+  },
+  {
+    "id": "ag_06",
+    "message": "What payment methods do you accept?",
+    "expected_intent": "faq",
+    "expected_route": "rag",
+    "expected_tool": null,
+    "scenario_type": "easy",
+    "notes": "Static FAQ — RAG should find the answer directly."
+  },
+  {
+    "id": "ag_07",
+    "message": "Can you teach me how to bake bread?",
+    "expected_intent": "off_topic",
+    "expected_route": "direct",
+    "expected_tool": null,
+    "scenario_type": "easy",
+    "notes": "Off-topic — polite refusal, no agent or RAG."
+  },
+  {
+    "id": "ag_08",
+    "message": "What is your refund policy and does it apply if I've already used 80% of my plan?",
+    "expected_intent": "knowledge_search",
+    "expected_route": "agent",
+    "expected_tool": "rag_search",
+    "scenario_type": "hard",
+    "notes": "Complex multi-part question — agent should call rag_search."
+  },
+  {
+    "id": "ag_09",
+    "message": "My account shows a charge I didn't authorise. How do I dispute it and what's the SLA for resolution?",
+    "expected_intent": "knowledge_search",
+    "expected_route": "agent",
+    "expected_tool": "rag_search",
+    "scenario_type": "hard",
+    "notes": "Multi-step knowledge question — rag_search needed."
+  },
+  {
+    "id": "ag_10",
+    "message": "Can you compare your enterprise plan versus the business plan in detail, including all limits and pricing?",
+    "expected_intent": "knowledge_search",
+    "expected_route": "agent",
+    "expected_tool": "rag_search",
+    "scenario_type": "hard",
+    "notes": "Comparative deep-dive — agent calls rag_search to gather context."
+  },
+  {
+    "id": "ag_11",
+    "message": "What are your data residency options for EU customers under GDPR?",
+    "expected_intent": "knowledge_search",
+    "expected_route": "agent",
+    "expected_tool": "rag_search",
+    "scenario_type": "hard",
+    "notes": "Policy + compliance question — requires retrieval."
+  },
+  {
+    "id": "ag_12",
+    "message": "I'd love to get a demo. My name is Alice and my email is alice@acme.com.",
+    "expected_intent": "lead_capture",
+    "expected_route": "agent",
+    "expected_tool": "capture_lead",
+    "scenario_type": "lead_capture",
+    "notes": "User volunteers name and email — agent should call capture_lead."
+  },
+  {
+    "id": "ag_13",
+    "message": "Please have someone from sales contact me. I'm Bob, bob@startup.io.",
+    "expected_intent": "lead_capture",
+    "expected_route": "agent",
+    "expected_tool": "capture_lead",
+    "scenario_type": "lead_capture",
+    "notes": "Explicit callback request with contact details."
+  },
+  {
+    "id": "ag_14",
+    "message": "I need to speak to a real person immediately, this is urgent.",
+    "expected_intent": "escalation",
+    "expected_route": "agent",
+    "expected_tool": "escalate",
+    "scenario_type": "escalation",
+    "notes": "Explicit demand for human — agent must call escalate."
+  },
+  {
+    "id": "ag_15",
+    "message": "I've been waiting three days and this is completely unacceptable. I want to make a formal complaint.",
+    "expected_intent": "escalation",
+    "expected_route": "agent",
+    "expected_tool": "escalate",
+    "scenario_type": "escalation",
+    "notes": "Frustrated user — escalation should fire."
+  },
+  {
+    "id": "ag_16",
+    "message": "Get me a manager right now.",
+    "expected_intent": "escalation",
+    "expected_route": "agent",
+    "expected_tool": "escalate",
+    "scenario_type": "escalation",
+    "notes": "Direct escalation demand."
+  },
+  {
+    "id": "ag_17",
+    "message": "I'm evaluating your platform for a 500-seat enterprise deployment. Can you walk me through onboarding, SSO, and audit logging?",
+    "expected_intent": "knowledge_search",
+    "expected_route": "agent",
+    "expected_tool": "rag_search",
+    "scenario_type": "hard",
+    "notes": "Enterprise inquiry across multiple topics — agent must search."
+  }
+]
