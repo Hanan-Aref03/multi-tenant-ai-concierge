@@ -48,6 +48,12 @@ powershell -ExecutionPolicy Bypass -File scripts/run_team_checks.ps1
 When that finishes cleanly, the branch is in good shape for review.
 For the current completion estimate, see [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md).
 
+To start the full local stack with the API, model server, guardrails, and admin UI:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_app.ps1
+```
+
 ## Start Here
 
 1. Read `docs/ARCHITECTURE_AND_WORKFLOW.md` for the repo map and working rules.

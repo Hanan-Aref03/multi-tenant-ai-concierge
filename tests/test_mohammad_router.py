@@ -104,13 +104,13 @@ class TestClassifyIntent(unittest.TestCase):
 
     def test_llm_fallback_returns_correct_intent(self):
         client = self._make_llm_client(intent="escalation", confidence=0.88)
-        result = run(classify_intent("I want a human", [], None, client))
+        result = run(classify_intent("tenant-1", "I want a human", [], None, client))
         self.assertEqual(result.intent, "escalation")
         self.assertAlmostEqual(result.confidence, 0.88)
         self.assertEqual(result.source, "llm")
 
     def test_no_classifier_no_llm_returns_fallback(self):
-        result = run(classify_intent("hello", [], None, None))
+        result = run(classify_intent("tenant-1", "hello", [], None, None))
         self.assertEqual(result.intent, "knowledge_search")
         self.assertEqual(result.confidence, 0.0)
         self.assertEqual(result.source, "fallback")
@@ -122,7 +122,7 @@ class TestClassifyIntent(unittest.TestCase):
             {"intent": "unknown_intent", "confidence": 0.9}
         )
         client.chat.completions.create = AsyncMock(return_value=completion)
-        result = run(classify_intent("test", [], None, client))
+        result = run(classify_intent("tenant-1", "test", [], None, client))
         self.assertEqual(result.source, "fallback")
 
     def test_llm_invalid_json_falls_to_fallback(self):
@@ -130,14 +130,14 @@ class TestClassifyIntent(unittest.TestCase):
         completion = MagicMock()
         completion.choices[0].message.content = "not valid json"
         client.chat.completions.create = AsyncMock(return_value=completion)
-        result = run(classify_intent("test", [], None, client))
+        result = run(classify_intent("tenant-1", "test", [], None, client))
         self.assertEqual(result.source, "fallback")
 
     def test_classifier_server_error_falls_to_llm(self):
         """If model server raises, the LLM fallback should be used."""
         client = self._make_llm_client(intent="greeting", confidence=0.97)
         # classifier_url is set but httpx will fail (no server running)
-        result = run(classify_intent("hi", [], "http://localhost:9999", client))
+        result = run(classify_intent("tenant-1", "hi", [], "http://localhost:9999", client))
         # Should succeed via LLM fallback
         self.assertEqual(result.intent, "greeting")
         self.assertEqual(result.source, "llm")

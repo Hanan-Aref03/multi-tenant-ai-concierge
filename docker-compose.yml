@@ -66,6 +66,38 @@ services:
     ports:
       - "8200:8200"
 
+  modelserver:
+    build:
+      context: .
+      dockerfile: apps/modelserver/Dockerfile
+    container_name: concierge-modelserver
+    restart: unless-stopped
+    ports:
+      - "8010:8010"
+    environment:
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8010/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  guardrails:
+    build:
+      context: .
+      dockerfile: apps/guardrails/Dockerfile
+    container_name: concierge-guardrails
+    restart: unless-stopped
+    ports:
+      - "8011:8011"
+    environment:
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8011/healthz')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: .
@@ -79,11 +111,17 @@ services:
       REDIS_URL: redis://redis:6379
       SECRET_KEY: ${SECRET_KEY:-dev-secret-change-in-prod}
       VAULT_TOKEN: ${VAULT_TOKEN:-change-me}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-dev-service-token}
+      CLASSIFIER_URL: http://modelserver:8010/v1
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      modelserver:
+        condition: service_healthy
+      guardrails:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]

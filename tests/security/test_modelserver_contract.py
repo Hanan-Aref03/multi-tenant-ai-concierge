@@ -11,6 +11,17 @@ def test_modelserver_health_is_public() -> None:
     assert response.json() == {"status": "ok", "service": "modelserver"}
 
 
+def test_modelserver_health_contract_reports_model_state() -> None:
+    with TestClient(app) as client:
+        response = client.get("/health")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["model_loaded"] is True
+    assert body["model_checksum_valid"] is True
+
+
 def test_modelserver_classify_requires_service_token() -> None:
     with TestClient(app) as client:
         response = client.post(
