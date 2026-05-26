@@ -1,0 +1,87 @@
+{
+  "model_name": "concierge_classifier",
+  "owner": "Owner C - Models, Security & Guardrails",
+  "task": "Classify inbound visitor messages for the Concierge router",
+  "labels": [
+    "faq",
+    "human_request",
+    "other",
+    "sales_or_leads",
+    "spam",
+    "support"
+  ],
+  "dataset_sources": [
+    "Bitext customer support dataset mapped to faq/support/sales_or_leads/human_request",
+    "SMS Spam Collection mapped to spam",
+    "CLINC OOS plus mapped to other",
+    "Hand-labeled realistic concierge examples added for demo-style generalization"
+  ],
+  "data_cleaning": [
+    "Removed exact duplicate text leakage across train/validation/test",
+    "Cleaned template artifacts like {{person name}}, IDs, and long numbers",
+    "Used stratified train/validation/test split",
+    "Augmented training with realistic hand-labeled examples"
+  ],
+  "chosen_model": "Augmented Word+Char TF-IDF + Logistic Regression",
+  "chosen_model_reason": "Chosen for production because it has strong held-out test performance, better realistic-message behavior after augmentation, very low latency, simple joblib serving, and no torch/transformers in the container. The LLM baseline performed very well but is not used for every message because it adds API cost and latency.",
+  "router_confidence_threshold": 0.65,
+  "router_policy": {
+    "if_confidence_gte_threshold": "route directly using classifier label",
+    "if_confidence_lt_threshold": "send to agent/LLM path"
+  },
+  "final_comparison": [
+    {
+      "model": "Augmented Word+Char TF-IDF + Logistic Regression",
+      "type": "Classical ML",
+      "macro_f1": 0.9850903840122137,
+      "accuracy": 0.986644407345576,
+      "avg_latency_ms": 0.32163303165085527,
+      "notes": "Chosen: fast, cheap, local, joblib, no torch"
+    },
+    {
+      "model": "Small Neural Network",
+      "type": "Small DL",
+      "macro_f1": 0.9723072519829437,
+      "accuracy": 0.9724540901502504,
+      "avg_latency_ms": 0.027264895940662823,
+      "notes": "Good, but lower score and more complex"
+    },
+    {
+      "model": "Groq llama-3.1-8b-instant zero-shot",
+      "type": "LLM baseline",
+      "macro_f1": 1.0,
+      "accuracy": 1.0,
+      "avg_latency_ms": 214.249088650658,
+      "notes": "Best manual result, but API cost and latency"
+    }
+  ],
+  "llm_baseline": {
+    "model": "llama-3.1-8b-instant",
+    "provider": "Groq",
+    "note": "LLM zero-shot baseline evaluated on manual realistic examples. Full held-out test was not run because API evaluation has cost and latency.",
+    "manual_examples": {
+      "examples": 21,
+      "accuracy": 1.0,
+      "macro_f1": 1.0,
+      "total_latency_seconds": 4.499230861663818,
+      "avg_latency_seconds": 0.214249088650658
+    }
+  },
+  "artifact": {
+    "path": "concierge_classifier.joblib",
+    "sha256": "6650faf0c9869a2b4111eb47a307d370208f74671c3d235eb6023a04a847788b",
+    "format": "joblib",
+    "serving_runtime": "scikit-learn + joblib",
+    "no_torch_in_container": true
+  },
+  "dataset_hashes": {
+    "train.csv": "ff8fd29e388bac5a59214f28577fadcc1efced99fc321e2e2f8631bfaec26bf9",
+    "val.csv": "6506953f20666aa42819d0263930492f6c4d8d4829162f2e8a0257813424c829",
+    "test.csv": "b34c10a8df3d478e2ca4f024cc773c059d1e78a468b419e014f4086b79fc36e3"
+  },
+  "limitations": [
+    "Public datasets may contain dataset-specific writing style.",
+    "Manual realistic sanity tests are reported separately from held-out public dataset scores.",
+    "Classifier is used only as a router; uncertain messages go to the agent."
+  ]
+}
