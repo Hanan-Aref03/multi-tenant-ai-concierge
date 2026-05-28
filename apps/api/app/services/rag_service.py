@@ -136,7 +136,7 @@ async def answer_from_knowledge(
             f"Context:\n{context_str}"
         )
 
-        answer_text = "Mocked answer using retrieved context."
+        answer_text = "Here is what I found in the knowledge base:\n" + context_str
         confidence = sum(res.score for res in reranked_results) / len(reranked_results)
 
         if llm_client:

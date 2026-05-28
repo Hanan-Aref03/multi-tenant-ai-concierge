@@ -1,4 +1,4 @@
-# Stage 1 -- build the React widget bundle
+# Stage 1 - build the React widget bundle
 FROM node:20-alpine AS widget-builder
 WORKDIR /widget
 COPY widget/package*.json ./
@@ -6,7 +6,7 @@ RUN npm ci --prefer-offline
 COPY widget/ ./
 RUN npm run build
 
-# Stage 2 -- Python API + widget static files
+# Stage 2 - Python API + widget static files
 FROM python:3.11-slim AS api
 WORKDIR /workspace
 
@@ -14,15 +14,13 @@ COPY backend/requirements.txt /workspace/backend/
 RUN pip install --no-cache-dir -r /workspace/backend/requirements.txt
 
 COPY backend/ /workspace/backend/
-COPY apps/__init__.py /workspace/apps/__init__.py
-COPY apps/api/ /workspace/apps/api/
-COPY apps/shared/ /workspace/apps/shared/
+COPY apps/ /workspace/apps/
 COPY services/ /workspace/services/
 COPY prompts/ /workspace/prompts/
 COPY widget/public/ /workspace/widget/public/
 COPY --from=widget-builder /widget/dist /workspace/widget/dist/
 
-ENV PYTHONPATH=/workspace:/workspace/backend
+ENV PYTHONPATH=/workspace
 WORKDIR /workspace/backend
 
 EXPOSE 8000

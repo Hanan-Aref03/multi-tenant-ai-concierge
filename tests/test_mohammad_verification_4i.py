@@ -189,18 +189,15 @@ class TestHardTurnsInvokeAgent(unittest.TestCase):
         ))
         self.assertEqual(result.routed_to, "agent")
 
-    def test_lead_capture_intent_routes_to_agent(self):
-        """lead_capture intent routes to agent and returns lead_captured action."""
-        async def fake_agent(**kwargs):
-            return {"reply": "Lead saved!", "action": "lead_captured", "sources": [], "rag_confidence": 0.0}
-
+    def test_lead_capture_intent_shortcuts_to_direct_capture(self):
+        """lead_capture intent routes through the direct lead-capture shortcut."""
         result = run(route(
             "t1", "s1",
             "I'd love to book a demo. I'm Alice, alice@example.com.", [],
             llm_client=_llm_classifier("lead_capture"),
-            agent_fn=fake_agent,
+            agent_fn=None,
         ))
-        self.assertEqual(result.routed_to, "agent")
+        self.assertEqual(result.routed_to, "direct")
         self.assertEqual(result.action, "lead_captured")
 
     def test_escalation_intent_routes_to_agent(self):

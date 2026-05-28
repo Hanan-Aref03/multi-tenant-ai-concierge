@@ -8,6 +8,8 @@ import hashlib
 import json
 import logging
 import os
+import re
+import uuid
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
@@ -21,7 +23,16 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-INTENTS = frozenset({"greeting", "faq", "knowledge_search", "lead_capture", "escalation", "off_topic"})
+INTENTS = frozenset({"greeting", "faq", "knowledge_search", "lead_capture", "escalation", "off_topic", "spam"})
+
+MODELSERVER_INTENT_MAP: Dict[str, str] = {
+    "faq": "faq",
+    "support": "knowledge_search",
+    "sales_or_leads": "lead_capture",
+    "human_request": "escalation",
+    "spam": "spam",
+    "other": "knowledge_search",
+}
 
 # Below this classifier confidence → always route to agent (4A.2)
 CLASSIFIER_CONFIDENCE_THRESHOLD = 0.7
@@ -29,8 +40,28 @@ CLASSIFIER_CONFIDENCE_THRESHOLD = 0.7
 # Below this RAG answer confidence → fall through to agent (4A.2)
 RAG_CONFIDENCE_THRESHOLD = 0.5
 
+SALES_KEYWORDS = (
+    "pricing",
+    "buy",
+    "interested",
+    "contact me",
+    "sales representative",
+    "my email is",
+    "my name is",
+    "quote",
+    "demo",
+)
+
+EMAIL_RE = re.compile(r"\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b", re.IGNORECASE)
+PHONE_RE = re.compile(r"(?:\+?\d[\d\s().-]{7,}\d)")
+NAME_RE = re.compile(
+    r"\bmy name is\s+([A-Z][A-Za-z.'-]*(?:\s+[A-Z][A-Za-z.'-]*){0,3})",
+    re.IGNORECASE,
+)
+
 _DIRECT_REPLIES: Dict[str, str] = {
     "greeting": "Hello! How can I help you today?",
+    "spam": "I can't help with that request. If you need help with our products or services, please send a clear question.",
     "off_topic": (
         "I'm here to help with questions about our products and services. "
         "Is there anything I can assist you with in that area?"
@@ -47,6 +78,8 @@ class ClassifyResult:
     intent: str
     confidence: float
     source: str  # "classifier_server" | "llm" | "fallback"
+    raw_intent: Optional[str] = None
+    raw_route: Optional[str] = None
 
 
 @dataclass
@@ -63,6 +96,52 @@ class RouteResult:
 # ---------------------------------------------------------------------------
 # Intent classification helpers (4A.1)
 # ---------------------------------------------------------------------------
+
+
+def normalize_classifier_intent(label: str) -> str:
+    """Map modelserver labels onto router-owned intent names in one place."""
+    normalized = str(label or "").strip().lower()
+    return MODELSERVER_INTENT_MAP.get(normalized, normalized)
+
+
+def _has_sales_signal(message: str) -> bool:
+    lowered = message.lower()
+    return any(keyword in lowered for keyword in SALES_KEYWORDS)
+
+
+def _extract_contact(message: str) -> Dict[str, Optional[str]]:
+    email_match = EMAIL_RE.search(message)
+    phone_match = PHONE_RE.search(message)
+    name_match = NAME_RE.search(message)
+    name = None
+    if name_match:
+        name = re.split(
+            r"\s+(?:and|email|phone|at|contact)\b",
+            name_match.group(1).strip(" .,!?:;"),
+            maxsplit=1,
+            flags=re.IGNORECASE,
+        )[0].strip(" .,!?:;")
+    return {
+        "name": name,
+        "email": email_match.group(0) if email_match else None,
+        "phone": phone_match.group(0).strip() if phone_match else None,
+    }
+
+
+def _has_contact_info(message: str) -> bool:
+    contact = _extract_contact(message)
+    return bool(contact["email"] or contact["phone"])
+
+
+def _should_force_lead_capture(message: str, classification: ClassifyResult) -> bool:
+    if classification.intent == "lead_capture":
+        return True
+    if not _has_sales_signal(message):
+        return False
+    return (
+        classification.intent in {"knowledge_search", "faq", "escalation"}
+        or classification.confidence < CLASSIFIER_CONFIDENCE_THRESHOLD
+    )
 
 
 async def _call_classifier_server(
@@ -84,14 +163,31 @@ async def _call_classifier_server(
             resp.raise_for_status()
             data = resp.json()
 
-        intent = str(data.get("intent", "")).lower()
+        raw_intent = str(data.get("intent", "")).lower()
+        raw_route = str(data.get("route", "")).lower()
+        intent = normalize_classifier_intent(raw_intent)
         confidence = float(data.get("confidence", 0.0))
 
+        logger.info(
+            "CLASSIFIER_RESULT tenant=%s raw_intent=%s raw_route=%s normalized_intent=%s confidence=%.3f",
+            tenant_id,
+            raw_intent,
+            raw_route,
+            intent,
+            confidence,
+        )
+
         if intent not in INTENTS:
-            logger.warning("Classifier server returned unknown intent '%s'", intent)
+            logger.warning("Classifier server returned unknown intent '%s'", raw_intent)
             return None
 
-        return ClassifyResult(intent=intent, confidence=confidence, source="classifier_server")
+        return ClassifyResult(
+            intent=intent,
+            confidence=confidence,
+            source="classifier_server",
+            raw_intent=raw_intent,
+            raw_route=raw_route,
+        )
 
     except Exception as exc:
         logger.warning("Classifier server unavailable (%s); falling back to LLM", exc)
@@ -148,7 +244,7 @@ async def _classify_via_llm(
             logger.warning("LLM classifier returned unknown intent '%s'", intent)
             return None
 
-        return ClassifyResult(intent=intent, confidence=confidence, source="llm")
+        return ClassifyResult(intent=intent, confidence=confidence, source="llm", raw_intent=intent)
 
     except Exception as exc:
         logger.error("LLM classification failed: %s", exc)
@@ -173,15 +269,52 @@ async def classify_intent(
     if classifier_url:
         result = await _call_classifier_server(tenant_id, message, classifier_url)
         if result:
+            if _should_force_lead_capture(message, result):
+                logger.info(
+                    "LEAD_KEYWORD_FALLBACK tenant=%s original_intent=%s raw_intent=%s confidence=%.3f",
+                    tenant_id,
+                    result.intent,
+                    result.raw_intent,
+                    result.confidence,
+                )
+                return ClassifyResult(
+                    intent="lead_capture",
+                    confidence=max(result.confidence, CLASSIFIER_CONFIDENCE_THRESHOLD),
+                    source=f"{result.source}:keyword_fallback",
+                    raw_intent=result.raw_intent,
+                    raw_route=result.raw_route,
+                )
             return result
 
     if llm_client:
         result = await _classify_via_llm(message, conversation_history, llm_client)
         if result:
+            if _should_force_lead_capture(message, result):
+                logger.info(
+                    "LEAD_KEYWORD_FALLBACK tenant=%s original_intent=%s raw_intent=%s confidence=%.3f",
+                    tenant_id,
+                    result.intent,
+                    result.raw_intent,
+                    result.confidence,
+                )
+                return ClassifyResult(
+                    intent="lead_capture",
+                    confidence=max(result.confidence, CLASSIFIER_CONFIDENCE_THRESHOLD),
+                    source=f"{result.source}:keyword_fallback",
+                    raw_intent=result.raw_intent,
+                    raw_route=result.raw_route,
+                )
             return result
 
     logger.warning("All classifiers failed; defaulting to knowledge_search with 0.0 confidence")
-    return ClassifyResult(intent="knowledge_search", confidence=0.0, source="fallback")
+    fallback = ClassifyResult(intent="knowledge_search", confidence=0.0, source="fallback")
+    if _should_force_lead_capture(message, fallback):
+        return ClassifyResult(
+            intent="lead_capture",
+            confidence=CLASSIFIER_CONFIDENCE_THRESHOLD,
+            source="fallback:keyword_fallback",
+        )
+    return fallback
 
 
 # ---------------------------------------------------------------------------
@@ -195,14 +328,14 @@ def _decide_route(classification: ClassifyResult) -> str:
 
     Rules (ROUT-01..03):
     - Low confidence → agent (fallback handles anything uncertain)
-    - greeting / off_topic → direct (no LLM call needed)
+    - greeting / off_topic / spam → direct (no LLM call needed)
     - faq / knowledge_search → rag
     - lead_capture / escalation → agent
     """
     if classification.confidence < CLASSIFIER_CONFIDENCE_THRESHOLD:
         return "agent"
 
-    if classification.intent in ("greeting", "off_topic"):
+    if classification.intent in ("greeting", "off_topic", "spam"):
         return "direct"
 
     if classification.intent in ("faq", "knowledge_search"):
@@ -229,7 +362,7 @@ def _log_routing(
     message_hash = hashlib.sha256(message.encode()).hexdigest()[:16]
     logger.info(
         "ROUTING_DECISION tenant=%s session=%s msg_hash=%s intent=%s "
-        "confidence=%.3f routed_to=%s classifier_source=%s",
+        "confidence=%.3f routed_to=%s classifier_source=%s raw_intent=%s raw_route=%s",
         tenant_id,
         session_id,
         message_hash,
@@ -237,7 +370,110 @@ def _log_routing(
         classification.confidence,
         routed_to,
         classification.source,
+        classification.raw_intent,
+        classification.raw_route,
     )
+
+
+async def _capture_lead_direct(
+    *,
+    tenant_id: str,
+    session_id: str,
+    message: str,
+    db_session,
+) -> Dict[str, Any]:
+    contact = _extract_contact(message)
+    name = contact["name"] or "there"
+    email = contact["email"]
+    phone = contact["phone"]
+
+    missing = []
+    if not email and not phone:
+        missing.append("email or phone number")
+    if missing:
+        return {
+            "reply": f"I can help with that. Please share your {' and '.join(missing)} so our team can contact you.",
+            "action": None,
+        }
+
+    if db_session is not None:
+        try:
+            from sqlalchemy import text as sa_text
+
+            lead_id = str(uuid.uuid4())
+            params = {
+                "lead_id": lead_id,
+                "tenant_id": tenant_id,
+                "conversation_id": session_id,
+                "full_name": contact["name"] or "Website visitor",
+                "email": email or "",
+                "phone": phone,
+                "message": message,
+                "metadata": json.dumps({
+                    "phone": phone,
+                    "conversation_id": session_id,
+                    "intent": "lead_capture",
+                    "message": message,
+                }),
+            }
+            try:
+                await db_session.execute(
+                    sa_text("""
+                        INSERT INTO app.leads
+                            (lead_id, tenant_id, full_name, email, intent, source, status, metadata, created_at)
+                        VALUES
+                            (:lead_id, :tenant_id, :full_name, :email, 'sales_or_leads',
+                             'widget', 'new', :metadata, NOW());
+                    """),
+                    params,
+                )
+            except Exception:
+                if hasattr(db_session, "rollback"):
+                    await db_session.rollback()
+                await db_session.execute(
+                    sa_text("""
+                        CREATE TABLE IF NOT EXISTS public.leads (
+                            lead_id uuid PRIMARY KEY,
+                            tenant_id uuid NOT NULL,
+                            conversation_id uuid NOT NULL,
+                            full_name text NOT NULL,
+                            email text NOT NULL,
+                            phone text,
+                            intent text NOT NULL,
+                            message text NOT NULL,
+                            source text NOT NULL DEFAULT 'widget',
+                            status text NOT NULL DEFAULT 'new',
+                            metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+                            created_at timestamptz NOT NULL DEFAULT now()
+                        );
+                    """)
+                )
+                await db_session.execute(
+                    sa_text("""
+                        INSERT INTO public.leads
+                            (lead_id, tenant_id, conversation_id, full_name, email, phone,
+                             intent, message, source, status, metadata, created_at)
+                        VALUES
+                            (:lead_id, :tenant_id, :conversation_id, :full_name, :email, :phone,
+                             'sales_or_leads', :message, 'widget', 'new', :metadata, NOW());
+                    """),
+                    params,
+                )
+            if hasattr(db_session, "commit"):
+                await db_session.commit()
+            logger.info("Lead captured directly: tenant=%s session=%s lead_id=%s", tenant_id, session_id, lead_id)
+        except Exception as exc:
+            logger.error("Direct lead capture failed for tenant=%s session=%s: %s", tenant_id, session_id, exc)
+            return {
+                "reply": "I have your request, but I could not save the lead right now. Let me connect you with our team.",
+                "action": "escalated",
+            }
+
+    display_name = contact["name"] or "there"
+    return {
+        "reply": f"Thanks {display_name}, I captured your request and our team will contact you.",
+        "action": "lead_captured",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -316,6 +552,26 @@ async def route(
             confidence=classification.confidence,
             routed_to="direct",
             action=None,
+        )
+
+    # 3a. Lead capture shortcut -----------------------------------------
+    if classification.intent == "lead_capture" and (
+        _has_sales_signal(message)
+        or _has_contact_info(message)
+        or classification.raw_intent == "sales_or_leads"
+    ):
+        lead_result = await _capture_lead_direct(
+            tenant_id=tenant_id,
+            session_id=session_id,
+            message=message,
+            db_session=db_session,
+        )
+        return RouteResult(
+            reply=lead_result.get("reply", ""),
+            intent=classification.intent,
+            confidence=classification.confidence,
+            routed_to="direct",
+            action=lead_result.get("action"),
         )
 
     # 3b. RAG path (faq / knowledge_search) ------------------------------

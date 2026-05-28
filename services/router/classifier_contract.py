@@ -46,11 +46,25 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 VALID_INTENTS = frozenset(
-    {"greeting", "faq", "knowledge_search", "lead_capture", "escalation", "off_topic"}
+    {
+        "greeting",
+        "faq",
+        "knowledge_search",
+        "lead_capture",
+        "escalation",
+        "off_topic",
+        "spam",
+    }
 )
 
 IntentLiteral = Literal[
-    "greeting", "faq", "knowledge_search", "lead_capture", "escalation", "off_topic"
+    "greeting",
+    "faq",
+    "knowledge_search",
+    "lead_capture",
+    "escalation",
+    "off_topic",
+    "spam",
 ]
 
 
