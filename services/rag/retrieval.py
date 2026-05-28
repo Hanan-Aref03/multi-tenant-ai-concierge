@@ -4,6 +4,7 @@ Mohammad owns the retrieval logic and answer grounding.
 """
 
 import logging
+import re
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 
@@ -68,7 +69,15 @@ async def retrieve(
 
     # 1. Embed the query ------------------------------------------------
     client = get_embedding_client()
-    query_embedding = await client.embed_text(tenant_id, query, redis_client)
+    try:
+        query_embedding = await client.embed_text(tenant_id, query, redis_client)
+    except Exception as exc:
+        logger.warning(
+            "Embedding unavailable for tenant=%s; falling back to lexical retrieval: %s",
+            tenant_id,
+            exc,
+        )
+        return await _retrieve_lexical(tenant_id, query, db_session, top_k=top_k)
 
     # 2. Vector search via pgvector ------------------------------------
     sql = """
@@ -127,6 +136,56 @@ async def retrieve(
         score_threshold,
     )
 
+    return results
+
+
+async def _retrieve_lexical(
+    tenant_id: str,
+    query: str,
+    db_session,
+    top_k: int,
+) -> List[RetrievalResult]:
+    """Tenant-filtered fallback retrieval for runtimes without embedding deps."""
+    terms = [term.lower() for term in re.findall(r"[A-Za-z0-9]{3,}", query)[:6]]
+    if not terms:
+        return []
+
+    where_clause = " OR ".join(f"lower(content) LIKE :term_{idx}" for idx, _ in enumerate(terms))
+    sql = f"""
+        SELECT
+            content AS chunk_text,
+            document_id AS content_id,
+            chunk_index,
+            metadata
+        FROM app.content_chunks
+        WHERE tenant_id = :tid
+          AND ({where_clause})
+        ORDER BY created_at DESC
+        LIMIT :k;
+    """
+    params: Dict[str, Any] = {"tid": tenant_id, "k": top_k}
+    params.update({f"term_{idx}": f"%{term}%" for idx, term in enumerate(terms)})
+
+    try:
+        from sqlalchemy import text as sa_text
+
+        result = await db_session.execute(sa_text(sql), params)
+        rows = result.fetchall()
+    except Exception as exc:
+        logger.error("Lexical retrieval failed for tenant=%s: %s", tenant_id, exc)
+        return []
+
+    results = [
+        RetrievalResult(
+            chunk_text=row.chunk_text,
+            score=0.7,
+            content_id=str(row.content_id),
+            chunk_index=row.chunk_index,
+            metadata=row.metadata if row.metadata else {},
+        )
+        for row in rows
+    ]
+    logger.info("Lexical retrieval for tenant=%s returned %d results", tenant_id, len(results))
     return results
 
 
