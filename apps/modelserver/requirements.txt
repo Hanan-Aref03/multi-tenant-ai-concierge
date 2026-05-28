@@ -2,3 +2,6 @@ fastapi
 joblib==1.4.2
 scikit-learn==1.6.1
 uvicorn
+# Optional: ONNX export (run apps/modelserver/scripts/export_onnx.py)
+skl2onnx>=1.17
+onnxruntime>=1.18
