@@ -26,6 +26,7 @@ The big rule is simple: Tenant A must never see Tenant B data.
 - `.planning/` - project planning artifacts from GSD
 
 For the canonical repo guide, read [docs/ARCHITECTURE_AND_WORKFLOW.md](docs/ARCHITECTURE_AND_WORKFLOW.md).
+For the demo walkthrough, read [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ## Current Runtime Map
 

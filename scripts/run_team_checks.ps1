@@ -104,7 +104,7 @@ Invoke-Step -Name "Run root pytest suite" -Action {
 Invoke-Step -Name "Run backend pytest suite" -Action {
     Invoke-WithWorkspaceTemp -Action {
         Invoke-InDirectory -Path "backend" -Action {
-            $env:PYTHONPATH = "."
+            $env:PYTHONPATH = "..;."
             try {
                 python -m pytest tests -q -p no:cacheprovider
             }

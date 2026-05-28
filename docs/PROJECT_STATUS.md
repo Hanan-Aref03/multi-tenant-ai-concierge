@@ -13,15 +13,15 @@ This is a working estimate of how much of the project is complete right now.
 
 ## Overall Estimate
 
-- Functional completion: 96%
-- Production hardening: 88%
-- Documentation and workflow clarity: 96%
+- Functional completion: 98%
+- Production hardening: 90%
+- Documentation and workflow clarity: 98%
 
 ## Why It Is Not 100%
 
 - The only external blocker is Rayan's exported artifact and PR.
+- The sklearn artifact/runtime version mismatch still prints a warning until the runtime is pinned to 1.6.1.
 - The repo still carries duplicate legacy/new surfaces in a few places.
-- The deprecation warnings were trimmed in the active runtime code.
 
 ## Current Reality
 

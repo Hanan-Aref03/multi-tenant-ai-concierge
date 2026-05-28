@@ -34,28 +34,36 @@ async def test_full_embed_flow() -> None:
     conversation_id = uuid.uuid4()
     token = _token_for(conversation_id)
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        # Chat with valid token → 200
-        res = await client.post(
-            "/api/chat",
-            json={"conversation_id": str(conversation_id), "message": "hello"},
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert res.status_code == 200
-        assert res.json()["conversation_id"] == str(conversation_id)
+    with patch("app.api.chat.process_message", AsyncMock(return_value={
+        "reply": "Hello from the assistant.",
+        "intent": "greeting",
+        "action": None,
+        "sources": [],
+        "rag_confidence": 0.0,
+    })):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            # Chat with valid token → 200
+            res = await client.post(
+                "/api/chat",
+                json={"conversation_id": str(conversation_id), "message": "hello"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert res.status_code == 200
+            assert res.json()["conversation_id"] == str(conversation_id)
+            assert res.json()["reply"] == "Hello from the assistant."
 
-        # Chat without token → 401
-        res2 = await client.post(
-            "/api/chat",
-            json={"conversation_id": str(conversation_id), "message": "hello"},
-        )
-        assert res2.status_code == 401
+            # Chat without token → 401
+            res2 = await client.post(
+                "/api/chat",
+                json={"conversation_id": str(conversation_id), "message": "hello"},
+            )
+            assert res2.status_code == 401
 
-        # Chat with expired token → 401
-        expired = _token_for(conversation_id, expire=timedelta(seconds=-1))
-        res3 = await client.post(
-            "/api/chat",
-            json={"conversation_id": str(conversation_id), "message": "hello"},
-            headers={"Authorization": f"Bearer {expired}"},
-        )
-        assert res3.status_code == 401
+            # Chat with expired token → 401
+            expired = _token_for(conversation_id, expire=timedelta(seconds=-1))
+            res3 = await client.post(
+                "/api/chat",
+                json={"conversation_id": str(conversation_id), "message": "hello"},
+                headers={"Authorization": f"Bearer {expired}"},
+            )
+            assert res3.status_code == 401

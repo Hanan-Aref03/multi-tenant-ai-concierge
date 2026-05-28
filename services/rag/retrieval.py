@@ -68,7 +68,22 @@ async def retrieve(
 
     # 1. Embed the query ------------------------------------------------
     client = get_embedding_client()
-    query_embedding = await client.embed_text(tenant_id, query, redis_client)
+    try:
+        query_embedding = await client.embed_text(tenant_id, query, redis_client)
+    except RuntimeError as exc:
+        logger.warning(
+            "Embedding client unavailable for tenant=%s; returning no retrieval results: %s",
+            tenant_id,
+            exc,
+        )
+        return []
+    except Exception as exc:
+        logger.warning(
+            "Embedding generation failed for tenant=%s; returning no retrieval results: %s",
+            tenant_id,
+            exc,
+        )
+        return []
 
     # 2. Vector search via pgvector ------------------------------------
     sql = """

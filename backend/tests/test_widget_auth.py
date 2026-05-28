@@ -145,15 +145,22 @@ async def test_chat_tampered_token() -> None:
 async def test_chat_valid_token() -> None:
     """POST /api/chat with a valid token → 200."""
     token = _make_token()
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        res = await client.post(
-            "/api/chat",
-            json={"conversation_id": str(TEST_CONVERSATION_ID), "message": "hello"},
-            headers={"Authorization": f"Bearer {token}"},
-        )
+    with patch("app.api.chat.process_message", AsyncMock(return_value={
+        "reply": "Hello from the assistant.",
+        "intent": "greeting",
+        "action": None,
+        "sources": [],
+        "rag_confidence": 0.0,
+    })):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            res = await client.post(
+                "/api/chat",
+                json={"conversation_id": str(TEST_CONVERSATION_ID), "message": "hello"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
     assert res.status_code == 200, res.text
     data = res.json()
-    assert "reply" in data
+    assert data["reply"] == "Hello from the assistant."
 
 
 @pytest.mark.asyncio
@@ -161,17 +168,27 @@ async def test_chat_tenant_id_from_token_not_body() -> None:
     """Any tenant_id in the request body is ignored — only token claims used."""
     token = _make_token(tenant_id=TEST_TENANT_ID)
     evil_tenant_id = str(uuid.uuid4())
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        res = await client.post(
-            "/api/chat",
-            # Sending extra field — FastAPI ignores unknown fields; token tenant_id wins
-            json={
-                "conversation_id": str(TEST_CONVERSATION_ID),
-                "message": "hello",
-                "tenant_id": evil_tenant_id,  # must be ignored
-            },
-            headers={"Authorization": f"Bearer {token}"},
-        )
+    def _reply(**kwargs):
+        return {
+            "reply": f"tenant={kwargs['tenant_id']}",
+            "intent": "greeting",
+            "action": None,
+            "sources": [],
+            "rag_confidence": 0.0,
+        }
+
+    with patch("app.api.chat.process_message", AsyncMock(side_effect=_reply)):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            res = await client.post(
+                "/api/chat",
+                # Sending extra field — FastAPI ignores unknown fields; token tenant_id wins
+                json={
+                    "conversation_id": str(TEST_CONVERSATION_ID),
+                    "message": "hello",
+                    "tenant_id": evil_tenant_id,  # must be ignored
+                },
+                headers={"Authorization": f"Bearer {token}"},
+            )
     assert res.status_code == 200, res.text
     # The reply contains the correct tenant_id from the token, not the evil one
     assert evil_tenant_id not in res.json()["reply"] or str(TEST_TENANT_ID) in res.json()["reply"]
