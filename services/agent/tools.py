@@ -221,11 +221,11 @@ async def _capture_lead(
             lead_id = str(uuid.uuid4())
             await db_session.execute(
                 sa_text("""
-                    INSERT INTO leads
-                        (lead_id, tenant_id, full_name, email, phone, notes, session_id, status, created_at)
+                    INSERT INTO app.leads
+                        (lead_id, tenant_id, full_name, email, intent, source, status, metadata, created_at)
                     VALUES
-                        (:lead_id, :tenant_id, :full_name, :email, :phone, :notes,
-                         :session_id, 'new', NOW())
+                        (:lead_id, :tenant_id, :full_name, :email, 'sales_or_leads',
+                         'widget', 'new', :metadata, NOW())
                     ON CONFLICT DO NOTHING;
                 """),
                 {
@@ -233,9 +233,11 @@ async def _capture_lead(
                     "tenant_id": tenant_id,
                     "full_name": name_.strip(),
                     "email": email.strip(),
-                    "phone": phone,
-                    "notes": notes,
-                    "session_id": session_id,
+                    "metadata": json.dumps({
+                        "phone": phone,
+                        "notes": notes,
+                        "session_id": session_id,
+                    }),
                 },
             )
             logger.info("Lead captured: tenant=%s session=%s lead_id=%s", tenant_id, session_id, lead_id)
@@ -265,11 +267,11 @@ async def _escalate(
 
             await db_session.execute(
                 sa_text("""
-                    UPDATE conversations
+                    UPDATE app.conversations
                     SET status = 'escalated',
                         updated_at = NOW()
                     WHERE tenant_id = :tenant_id
-                      AND session_id = :session_id;
+                      AND conversation_id = :session_id;
                 """),
                 {"tenant_id": tenant_id, "session_id": session_id},
             )
