@@ -108,7 +108,7 @@ def export(model_card_path: Path, output_path: Path) -> None:
     sha256 = _compute_sha256(output_path)
     size_kb = output_path.stat().st_size / 1024
 
-    print(f"\nExport complete:")
+    print("\nExport complete:")
     print(f"  Output:  {output_path}")
     print(f"  Size:    {size_kb:.1f} KB")
     print(f"  SHA-256: {sha256}")
