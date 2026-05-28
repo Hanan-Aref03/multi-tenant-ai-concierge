@@ -58,9 +58,7 @@ def mock_origins():
             return [ALLOWED_ORIGIN]
         return []
 
-    with patch("app.api.widget.get_allowed_origins", side_effect=_get_origins), patch(
-        "app.services.origin_check.get_allowed_origins", side_effect=_get_origins
-    ):
+    with patch("app.services.origin_check.get_allowed_origins", side_effect=_get_origins):
         yield
 
 

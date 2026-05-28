@@ -22,7 +22,6 @@ if is_stub_mode() or args.stub:
     report_and_exit("classifier", "macro_f1", threshold, threshold, comparison)
 
 # ── Real eval (runs once model artifacts land) ────────────────────────────
-import numpy as np  # noqa: E402
 
 data_path = Path("evals/data/classifier_test.json")
 if not data_path.exists():

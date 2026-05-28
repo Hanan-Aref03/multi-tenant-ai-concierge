@@ -1,11 +1,162 @@
-name: ci
+name: CI
 
-# Ali Faddel owns CI wiring.
-# Everyone depends on this gate before merge.
+# Owner D (Ali Faddel) owns this pipeline.
+# On every push: lint → test → build → eval-gates → smoke-test
+# Any gate regression blocks merge. Thresholds live in eval_thresholds.yaml.
 
 on:
   push:
   pull_request:
 
-jobs: {}
+env:
+  CI_STUB_MODE: "true"
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "20"
 
+jobs:
+
+  # ── 1. Lint ────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install ruff
+        run: pip install ruff
+      - name: Ruff — backend
+        run: ruff check backend/ --output-format=github
+      - name: Ruff — admin
+        run: ruff check admin/ --output-format=github
+      - name: Ruff — evals
+        run: ruff check evals/*.py --output-format=github
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm install (widget)
+        working-directory: widget
+        run: npm ci
+      - name: ESLint (widget)
+        working-directory: widget
+        run: npm run lint
+
+  # ── 2. Backend tests ───────────────────────────────────────────────────────
+  test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install backend dependencies
+        run: pip install -r backend/requirements.txt pytest pytest-asyncio httpx pydantic-settings
+      - name: Run pytest
+        working-directory: backend
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: python -m pytest tests/ -v --tb=short
+
+  # ── 3. Widget build + bundle size ─────────────────────────────────────────
+  build-widget:
+    name: Widget Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm install
+        working-directory: widget
+        run: npm ci
+      - name: Build
+        working-directory: widget
+        run: npm run build
+      - name: Bundle size check (≤ 50 KB gzipped)
+        working-directory: widget
+        run: |
+          FILE=$(ls dist/assets/index*.js | head -1)
+          GZIP_KB=$(gzip -c "$FILE" | wc -c | awk '{printf "%.1f", $1/1024}')
+          echo "Bundle size: ${GZIP_KB} KB gzipped"
+          python3 -c "
+          size = float('${GZIP_KB}')
+          if size > 50:
+              print(f'FAIL: {size} KB exceeds 50 KB limit')
+              exit(1)
+          print(f'PASS: {size} KB is under 50 KB limit')
+          "
+
+  # ── 4. Eval gates (matrix — all must pass) ────────────────────────────────
+  eval-gates:
+    name: Eval — ${{ matrix.gate }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false        # run all gates even if one fails
+      matrix:
+        gate:
+          - classifier
+          - agent_tool_selection
+          - rag
+          - injection_redteam
+          - redaction
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install pyyaml
+        run: pip install pyyaml
+      - name: Run ${{ matrix.gate }} gate
+        run: |
+          python evals/${{ matrix.gate }}.py \
+            --thresholds eval_thresholds.yaml \
+            --stub
+
+  # ── 5. Smoke test ─────────────────────────────────────────────────────────
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare env
+        run: cp .env.example .env
+
+      - name: Validate docker-compose config
+        run: docker compose config --quiet
+
+      - name: Build widget image
+        run: docker compose build widget
+
+      - name: Build admin image
+        run: docker compose build admin
+
+      - name: Start infrastructure (postgres + redis)
+        run: docker compose up -d postgres redis
+
+      - name: Wait for postgres
+        run: |
+          echo "Waiting for postgres..."
+          for i in $(seq 1 30); do
+            docker compose exec -T postgres pg_isready -U postgres && break
+            sleep 2
+          done
+
+      - name: Wait for redis
+        run: |
+          echo "Waiting for redis..."
+          for i in $(seq 1 15); do
+            docker compose exec -T redis redis-cli ping | grep -q PONG && break
+            sleep 2
+          done
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

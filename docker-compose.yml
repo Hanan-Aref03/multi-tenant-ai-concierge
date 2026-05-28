@@ -157,6 +157,20 @@ services:
       timeout: 5s
       retries: 5
 
+  widget:
+    build:
+      context: widget
+      dockerfile: Dockerfile
+    container_name: concierge-widget
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/index.html"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   api-smoke:
     image: python:3.12-slim
     profiles: ["smoke"]
