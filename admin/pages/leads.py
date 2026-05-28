@@ -1,4 +1,5 @@
-"""Leads page — read-only table of captured visitor leads for this tenant."""
+"""Leads page - read-only table of captured visitor leads for this tenant."""
+
 import pandas as pd
 import streamlit as st
 
@@ -13,8 +14,13 @@ if "leads_offset" not in st.session_state:
     st.session_state["leads_offset"] = 0
 
 data = get_leads(limit=PAGE_SIZE, offset=st.session_state["leads_offset"])
-if data is None:
-    st.stop()
+backend_ready = data is not None
+if not backend_ready:
+    st.warning(
+        "The admin API is not reachable yet, so this page is showing an empty lead table. "
+        "Once the backend is up, captured leads will appear here."
+    )
+    data = {"total": 0, "leads": []}
 
 total = data.get("total", 0)
 leads = data.get("leads", [])
@@ -30,10 +36,10 @@ else:
 
 col1, col2, col3 = st.columns([1, 2, 1])
 with col1:
-    if st.button("← Previous") and st.session_state["leads_offset"] > 0:
+    if st.button("<- Previous") and st.session_state["leads_offset"] > 0:
         st.session_state["leads_offset"] -= PAGE_SIZE
         st.rerun()
 with col3:
-    if st.button("Next →") and (st.session_state["leads_offset"] + PAGE_SIZE) < total:
+    if st.button("Next ->") and (st.session_state["leads_offset"] + PAGE_SIZE) < total:
         st.session_state["leads_offset"] += PAGE_SIZE
         st.rerun()

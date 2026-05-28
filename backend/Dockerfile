@@ -14,10 +14,14 @@ COPY backend/requirements.txt /workspace/backend/
 RUN pip install --no-cache-dir -r /workspace/backend/requirements.txt
 
 COPY backend/ /workspace/backend/
+COPY apps/ /workspace/apps/
+COPY services/ /workspace/services/
+COPY prompts/ /workspace/prompts/
 COPY widget/public/ /workspace/widget/public/
 COPY --from=widget-builder /widget/dist /workspace/widget/dist/
 
 WORKDIR /workspace/backend
+ENV PYTHONPATH=/workspace
 
 EXPOSE 8000
 

@@ -39,6 +39,7 @@ Tenant A must never be able to access Tenant B data, even if a developer forgets
 - Recommended stack from the brief: FastAPI, React + Vite widget, Streamlit admin, PostgreSQL, pgvector, Redis, MinIO, Vault, OpenAI APIs, NeMo Guardrails, GitHub Actions, and Docker Compose.
 - Deadline pressure is high: the brief is structured around a five-day build and Friday demo, so the plan should prioritize end-to-end slices over perfect layering.
 - The assistant should use a workflow-router first and a bounded tool-calling agent only for hard turns.
+- Repository guidance is centralized in `docs/ARCHITECTURE_AND_WORKFLOW.md` and `.planning/`; the legacy SpecKit workspace has been retired to keep the repo simple.
 
 ## Constraints
 

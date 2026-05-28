@@ -1,0 +1,12 @@
+{
+  "model": "llama-3.1-8b-instant",
+  "provider": "Groq",
+  "note": "LLM zero-shot baseline evaluated on manual realistic examples. Full held-out test was not run because API evaluation has cost and latency.",
+  "manual_examples": {
+    "examples": 21,
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "total_latency_seconds": 4.499230861663818,
+    "avg_latency_seconds": 0.214249088650658
+  }
+}

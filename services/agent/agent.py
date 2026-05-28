@@ -10,6 +10,7 @@ import os
 from typing import Any, Callable, Dict, List, Optional
 
 from services.agent.tools import ALLOWED_TOOLS, TOOL_DEFINITIONS, execute_tool
+from apps.shared.llm_client import get_chat_model
 from services.tracing import span
 
 logger = logging.getLogger(__name__)
@@ -232,7 +233,7 @@ async def run_agent(
 
             try:
                 response = await llm_client.chat.completions.create(
-                    model="gpt-4.1-mini",
+                    model=get_chat_model(),
                     messages=messages,
                     tools=TOOL_DEFINITIONS,
                     tool_choice="auto",

@@ -25,16 +25,46 @@ The big rule is simple: Tenant A must never see Tenant B data.
 - `docs/` - architecture, team ownership, and repo structure notes
 - `.planning/` - project planning artifacts from GSD
 
+For the canonical repo guide, read [docs/ARCHITECTURE_AND_WORKFLOW.md](docs/ARCHITECTURE_AND_WORKFLOW.md).
+
+## Current Runtime Map
+
+- `backend/` - current API/runtime image used by the legacy compose stack
+- `admin/` - Streamlit admin image for Owner D
+- `widget/` - standalone React widget build and container image
+- `apps/modelserver/` - Rayan's model-server shell and container image
+- `apps/guardrails/` - Rayan's guardrails shell and container image
+- `apps/api/` - Hanan's platform-spine smoke image
+- `apps/widget/` and `apps/admin/` - source slices for the longer-term refactor path
+
+## Team Checks
+
+Run the full local verification bundle with:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_team_checks.ps1
+```
+
+When that finishes cleanly, the branch is in good shape for review.
+For the current completion estimate, see [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md).
+
+To start the full local stack with the API, model server, guardrails, and admin UI:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_app.ps1
+```
+
 ## Start Here
 
-1. Read `.planning/PROJECT.md` to keep the core value in view.
-2. Read `docs/TEAM.md` to see who owns what.
-3. Read `docs/BRANCHING.md` before starting work.
-4. Read `docs/BRANCH_PROTECTION.md` before touching GitHub settings.
-5. Read `CONTRIBUTING.md` before committing or pushing.
-6. If you are Hanan, follow `docs/HANAN_PLATFORM_SPINE_PLAN.md` first.
-7. Build from the API spine outward.
-8. Protect tenant isolation at every layer.
+1. Read `docs/ARCHITECTURE_AND_WORKFLOW.md` for the repo map and working rules.
+2. Read `.planning/PROJECT.md` to keep the core value in view.
+3. Read `docs/TEAM.md` to see who owns what.
+4. Read `docs/BRANCHING.md` before starting work.
+5. Read `docs/BRANCH_PROTECTION.md` before touching GitHub settings.
+6. Read `CONTRIBUTING.md` before committing or pushing.
+7. If you are Hanan, follow `docs/HANAN_PLATFORM_SPINE_PLAN.md` first.
+8. Build from the API spine outward.
+9. Protect tenant isolation at every layer.
 
 ## Hanan Lane
 

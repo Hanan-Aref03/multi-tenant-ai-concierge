@@ -27,12 +27,16 @@ def _get_redis() -> aioredis.Redis:
 
 async def get_allowed_origins(widget_id: str, db: AsyncSession) -> list[str]:
     """Fetch allowed_origins for a widget_id, with Redis cache (TTL 60 s)."""
-    redis = _get_redis()
     cache_key = f"widget_origins:{widget_id}"
-
-    cached = await redis.get(cache_key)
-    if cached is not None:
-        return json.loads(cached)
+    redis = _get_redis()
+    if redis is not None:
+        try:
+            cached = await redis.get(cache_key)
+            if cached is not None:
+                return json.loads(cached)
+        except Exception:
+            # Redis is a cache, not a dependency. Fall through to the DB.
+            pass
 
     result = await db.execute(select(Widget).where(Widget.widget_id == widget_id))
     widget = result.scalar_one_or_none()
@@ -40,14 +44,23 @@ async def get_allowed_origins(widget_id: str, db: AsyncSession) -> list[str]:
         return []
 
     origins = widget.allowed_origins or []
-    await redis.setex(cache_key, settings.cors_cache_ttl_seconds, json.dumps(origins))
+    if redis is not None:
+        try:
+            await redis.setex(cache_key, settings.cors_cache_ttl_seconds, json.dumps(origins))
+        except Exception:
+            pass
     return origins
 
 
 async def invalidate_origins_cache(widget_id: str) -> None:
     """Call after admin updates allowed_origins so the cache refreshes."""
     redis = _get_redis()
-    await redis.delete(f"widget_origins:{widget_id}")
+    if redis is None:
+        return
+    try:
+        await redis.delete(f"widget_origins:{widget_id}")
+    except Exception:
+        pass
 
 
 async def verify_origin(request: Request, widget_id: str, db: AsyncSession) -> None:

@@ -3,11 +3,12 @@
 All reads and writes are scoped to the authenticated tenant via RLS.
 A tenant_admin cannot access another tenant's data by construction.
 """
+import os
 import re
 import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, field_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,6 +28,56 @@ _ORIGIN_RE = re.compile(r"^https?://[a-z0-9.-]+(:\d+)?$")
 async def require_tenant_admin() -> uuid.UUID:
     """Stub: returns a fixed tenant_id. Owner A replaces with real JWT role check."""
     return uuid.UUID("00000000-0000-0000-0000-000000000001")
+
+
+async def _get_or_create_widget(
+    tenant_id: uuid.UUID,
+    db: AsyncSession,
+) -> Widget:
+    """Return the tenant widget, seeding a safe default for the demo stack."""
+    result = await db.execute(select(Widget).where(Widget.tenant_id == tenant_id))
+    widget = result.scalar_one_or_none()
+    if widget is not None:
+        return widget
+
+    widget = Widget(
+        tenant_id=tenant_id,
+        widget_id=f"tenant-{tenant_id.hex[:8]}-widget",
+        greeting="Hi! How can I help you?",
+        accent_colour="#3B82F6",
+        allowed_origins=_default_allowed_origins(),
+    )
+    db.add(widget)
+    await db.commit()
+    await db.refresh(widget)
+    return widget
+
+
+def _default_allowed_origins() -> list[str]:
+    raw = os.getenv("WIDGET_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173")
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+async def _get_or_create_config(
+    tenant_id: uuid.UUID,
+    db: AsyncSession,
+) -> TenantConfig:
+    """Return the tenant config, seeding a safe default for the demo stack."""
+    result = await db.execute(select(TenantConfig).where(TenantConfig.tenant_id == tenant_id))
+    cfg = result.scalar_one_or_none()
+    if cfg is not None:
+        return cfg
+
+    cfg = TenantConfig(tenant_id=tenant_id)
+    cfg.agent_persona = "You are a helpful assistant."
+    cfg.enabled_tools = list(VALID_TOOLS)
+    cfg.allowed_topics = []
+    cfg.blocked_topics = []
+    cfg.refusal_tone = "polite"
+    db.add(cfg)
+    await db.commit()
+    await db.refresh(cfg)
+    return cfg
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -68,10 +119,7 @@ async def get_widget_config(
     tenant_id: uuid.UUID = Depends(require_tenant_admin),
     db: AsyncSession = Depends(get_db),
 ) -> WidgetResponse:
-    result = await db.execute(select(Widget).where(Widget.tenant_id == tenant_id))
-    widget = result.scalar_one_or_none()
-    if widget is None:
-        raise HTTPException(status_code=404, detail="Widget not found for this tenant")
+    widget = await _get_or_create_widget(tenant_id, db)
     return _widget_response(widget)
 
 
@@ -81,10 +129,7 @@ async def update_widget_config(
     tenant_id: uuid.UUID = Depends(require_tenant_admin),
     db: AsyncSession = Depends(get_db),
 ) -> WidgetResponse:
-    result = await db.execute(select(Widget).where(Widget.tenant_id == tenant_id))
-    widget = result.scalar_one_or_none()
-    if widget is None:
-        raise HTTPException(status_code=404, detail="Widget not found for this tenant")
+    widget = await _get_or_create_widget(tenant_id, db)
 
     if body.greeting is not None:
         widget.greeting = body.greeting
@@ -100,7 +145,12 @@ async def update_widget_config(
 
 
 def _widget_response(widget: Widget) -> WidgetResponse:
-    snippet = f'<script src="/widget.js" data-widget-id="{widget.widget_id}"></script>'
+    api_base_url = os.getenv("PUBLIC_API_BASE_URL", "http://localhost:8000").rstrip("/")
+    snippet = (
+        f'<script src="{api_base_url}/widget.js" '
+        f'data-widget-id="{widget.widget_id}" '
+        f'data-api-base="{api_base_url}"></script>'
+    )
     return WidgetResponse(
         widget_id=widget.widget_id,
         greeting=widget.greeting,
@@ -151,10 +201,7 @@ async def get_agent_config(
     tenant_id: uuid.UUID = Depends(require_tenant_admin),
     db: AsyncSession = Depends(get_db),
 ) -> ConfigResponse:
-    result = await db.execute(select(TenantConfig).where(TenantConfig.tenant_id == tenant_id))
-    cfg = result.scalar_one_or_none()
-    if cfg is None:
-        raise HTTPException(status_code=404, detail="Config not found")
+    cfg = await _get_or_create_config(tenant_id, db)
     return ConfigResponse(
         agent_persona=cfg.agent_persona,
         enabled_tools=cfg.enabled_tools,
@@ -170,10 +217,7 @@ async def update_agent_config(
     tenant_id: uuid.UUID = Depends(require_tenant_admin),
     db: AsyncSession = Depends(get_db),
 ) -> ConfigResponse:
-    result = await db.execute(select(TenantConfig).where(TenantConfig.tenant_id == tenant_id))
-    cfg = result.scalar_one_or_none()
-    if cfg is None:
-        raise HTTPException(status_code=404, detail="Config not found")
+    cfg = await _get_or_create_config(tenant_id, db)
 
     for field in ("agent_persona", "enabled_tools", "allowed_topics", "blocked_topics", "refusal_tone"):
         value = getattr(body, field)
