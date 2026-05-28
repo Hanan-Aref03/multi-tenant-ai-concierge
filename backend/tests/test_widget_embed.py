@@ -7,7 +7,9 @@ import jwt
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+import app.api.chat as chat_mod
 from app.config import get_settings
+from app.database import get_db
 from app.main import app
 
 settings = get_settings()
@@ -33,29 +35,52 @@ async def test_full_embed_flow() -> None:
     """End-to-end: loader gets token → chat message accepted."""
     conversation_id = uuid.uuid4()
     token = _token_for(conversation_id)
+    mock_db = AsyncMock()
 
-    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-        # Chat with valid token → 200
-        res = await client.post(
-            "/api/chat",
-            json={"conversation_id": str(conversation_id), "message": "hello"},
-            headers={"Authorization": f"Bearer {token}"},
-        )
-        assert res.status_code == 200
-        assert res.json()["conversation_id"] == str(conversation_id)
+    async def override_get_db():
+        yield mock_db
 
-        # Chat without token → 401
-        res2 = await client.post(
-            "/api/chat",
-            json={"conversation_id": str(conversation_id), "message": "hello"},
-        )
-        assert res2.status_code == 401
+    app.dependency_overrides[get_db] = override_get_db
+    with patch.object(chat_mod, "_guardrails_check", AsyncMock(return_value={
+        "allowed": True,
+        "decision": "allow",
+        "reason": "ok",
+        "redacted_message": "hello",
+    })), \
+         patch.object(chat_mod, "_get_redis", return_value=None), \
+         patch.object(chat_mod, "_get_llm", return_value=None), \
+         patch.object(chat_mod, "_classifier_url", return_value="http://modelserver:8010/v1"), \
+         patch.object(chat_mod, "process_message", AsyncMock(return_value={
+             "reply": "Real pipeline reply",
+             "intent": "knowledge_search",
+             "action": None,
+             "sources": [],
+             "rag_confidence": 0.0,
+         })):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            # Chat with valid token → 200
+            res = await client.post(
+                "/api/chat",
+                json={"conversation_id": str(conversation_id), "message": "hello"},
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert res.status_code == 200
+            assert res.json()["conversation_id"] == str(conversation_id)
+            assert "[Agent stub]" not in res.json()["reply"]
 
-        # Chat with expired token → 401
-        expired = _token_for(conversation_id, expire=timedelta(seconds=-1))
-        res3 = await client.post(
-            "/api/chat",
-            json={"conversation_id": str(conversation_id), "message": "hello"},
-            headers={"Authorization": f"Bearer {expired}"},
-        )
-        assert res3.status_code == 401
+            # Chat without token → 401
+            res2 = await client.post(
+                "/api/chat",
+                json={"conversation_id": str(conversation_id), "message": "hello"},
+            )
+            assert res2.status_code == 401
+
+            # Chat with expired token → 401
+            expired = _token_for(conversation_id, expire=timedelta(seconds=-1))
+            res3 = await client.post(
+                "/api/chat",
+                json={"conversation_id": str(conversation_id), "message": "hello"},
+                headers={"Authorization": f"Bearer {expired}"},
+            )
+            assert res3.status_code == 401
+    app.dependency_overrides.pop(get_db, None)

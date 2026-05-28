@@ -3,14 +3,16 @@
 Mohammad owns ingestion and retrieval-facing APIs.
 """
 
-import uuid
-import os
 import logging
-from typing import List, Optional, Literal
+import os
+import uuid
+from typing import Literal, List
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+from pydantic import BaseModel, ConfigDict, Field
+
 try:
     from minio import Minio
 except ImportError:  # pragma: no cover - optional local dependency
@@ -52,8 +54,7 @@ class ContentResponse(ContentBase):
     id: str
     tenant_id: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ---------------------------------------------------------------------------

@@ -23,6 +23,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.classifier_model = verified_classifier.model
     app.state.model_card = verified_classifier.model_card
     app.state.artifact_sha256 = verified_classifier.artifact_sha256
+    app.state.model_loaded = True
+    app.state.model_checksum_valid = True
     yield
 
 
@@ -36,6 +38,15 @@ app = FastAPI(
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
     return {"status": "ok", "service": "modelserver"}
+
+
+@app.get("/health")
+def health(request: Request) -> dict[str, object]:
+    return {
+        "status": "ok",
+        "model_loaded": bool(getattr(request.app.state, "model_loaded", False)),
+        "model_checksum_valid": bool(getattr(request.app.state, "model_checksum_valid", False)),
+    }
 
 
 @app.post(

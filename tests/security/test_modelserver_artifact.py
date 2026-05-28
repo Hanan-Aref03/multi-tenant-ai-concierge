@@ -1,5 +1,6 @@
 import json
 import shutil
+import uuid
 from pathlib import Path
 
 import pytest
@@ -24,11 +25,16 @@ def test_successful_artifact_hash_verification() -> None:
     assert hasattr(verified.model, "predict_proba")
 
 
-def test_hash_mismatch_raises_error(tmp_path: Path) -> None:
+def test_hash_mismatch_raises_error() -> None:
     model_card = json.loads(MODEL_CARD_PATH.read_text(encoding="utf-8"))
     original_artifact_path = MODEL_CARD_PATH.parent / model_card["artifact"]["path"]
-    copied_artifact_path = tmp_path / "concierge_classifier.joblib"
-    model_card_path = tmp_path / "model_card.json"
+    temp_root = MODEL_CARD_PATH.parent.parent.parent / "tmp"
+    temp_root.mkdir(exist_ok=True)
+    temp_dir = temp_root / f"modelserver-artifact-{uuid.uuid4().hex}"
+    temp_dir.mkdir(exist_ok=False)
+
+    copied_artifact_path = temp_dir / "concierge_classifier.joblib"
+    model_card_path = temp_dir / "model_card.json"
 
     shutil.copyfile(original_artifact_path, copied_artifact_path)
     model_card["artifact"]["path"] = copied_artifact_path.name

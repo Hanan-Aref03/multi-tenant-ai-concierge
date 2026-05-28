@@ -49,6 +49,7 @@ class AppSettings:
     actor_role_header: str = "X-Actor-Role"
     actor_subject_header: str = "X-Actor-Subject"
     openai_api_key: str = ""
+    gemini_api_key: str = ""
     embedding_model: str = "text-embedding-3-large"
     chat_model: str = "gpt-4.1-mini"
     classifier_model: str = "classifier.onnx"
@@ -58,6 +59,9 @@ class AppSettings:
     @classmethod
     def from_env(cls) -> "AppSettings":
         """Build settings from the process environment."""
+
+        gemini_api_key = os.getenv("GEMINI_API_KEY", os.getenv("GOOGLE_API_KEY", ""))
+        default_chat_model = "gemini-2.0-flash" if gemini_api_key else "gpt-4.1-mini"
 
         return cls(
             app_env=os.getenv("APP_ENV", "dev"),
@@ -84,8 +88,13 @@ class AppSettings:
             actor_role_header=os.getenv("ACTOR_ROLE_HEADER", "X-Actor-Role"),
             actor_subject_header=os.getenv("ACTOR_SUBJECT_HEADER", "X-Actor-Subject"),
             openai_api_key=os.getenv("OPENAI_API_KEY", ""),
+            gemini_api_key=gemini_api_key,
             embedding_model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-large"),
-            chat_model=os.getenv("CHAT_MODEL", "gpt-4.1-mini"),
+            chat_model=(
+                os.getenv("GEMINI_CHAT_MODEL", default_chat_model)
+                if gemini_api_key
+                else os.getenv("CHAT_MODEL", "gpt-4.1-mini")
+            ),
             classifier_model=os.getenv("CLASSIFIER_MODEL", "classifier.onnx"),
             otel_exporter_otlp_endpoint=os.getenv(
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
@@ -124,6 +133,7 @@ class AppSettings:
             "otel_exporter_otlp_endpoint": self.otel_exporter_otlp_endpoint,
             "otel_service_name": self.otel_service_name,
             "has_openai_api_key": bool(self.openai_api_key),
+            "has_gemini_api_key": bool(self.gemini_api_key),
             "has_vault_token": bool(self.vault_token),
             "has_widget_shared_secret": bool(self.widget_shared_secret),
         }

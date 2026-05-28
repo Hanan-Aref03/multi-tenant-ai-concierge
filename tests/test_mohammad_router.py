@@ -37,6 +37,7 @@ from services.router.router import (
     _decide_route,
     _log_routing,
     classify_intent,
+    normalize_classifier_intent,
     route,
 )
 
@@ -60,6 +61,9 @@ class TestDecideRoute(unittest.TestCase):
 
     def test_off_topic_routes_direct(self):
         self.assertEqual(_decide_route(self._cr("off_topic")), "direct")
+
+    def test_spam_routes_direct(self):
+        self.assertEqual(_decide_route(self._cr("spam")), "direct")
 
     def test_faq_routes_rag(self):
         self.assertEqual(_decide_route(self._cr("faq")), "rag")
@@ -85,6 +89,16 @@ class TestDecideRoute(unittest.TestCase):
         self.assertEqual(_decide_route(cr), "rag")
 
 
+class TestModelserverLabelNormalization(unittest.TestCase):
+    def test_modelserver_labels_map_to_router_intents(self):
+        self.assertEqual(normalize_classifier_intent("faq"), "faq")
+        self.assertEqual(normalize_classifier_intent("support"), "knowledge_search")
+        self.assertEqual(normalize_classifier_intent("sales_or_leads"), "lead_capture")
+        self.assertEqual(normalize_classifier_intent("human_request"), "escalation")
+        self.assertEqual(normalize_classifier_intent("spam"), "spam")
+        self.assertEqual(normalize_classifier_intent("other"), "knowledge_search")
+
+
 # ---------------------------------------------------------------------------
 # classify_intent tests
 # ---------------------------------------------------------------------------
@@ -104,13 +118,13 @@ class TestClassifyIntent(unittest.TestCase):
 
     def test_llm_fallback_returns_correct_intent(self):
         client = self._make_llm_client(intent="escalation", confidence=0.88)
-        result = run(classify_intent("I want a human", [], None, client))
+        result = run(classify_intent("tenant-1", "I want a human", [], None, client))
         self.assertEqual(result.intent, "escalation")
         self.assertAlmostEqual(result.confidence, 0.88)
         self.assertEqual(result.source, "llm")
 
     def test_no_classifier_no_llm_returns_fallback(self):
-        result = run(classify_intent("hello", [], None, None))
+        result = run(classify_intent("tenant-1", "hello", [], None, None))
         self.assertEqual(result.intent, "knowledge_search")
         self.assertEqual(result.confidence, 0.0)
         self.assertEqual(result.source, "fallback")
@@ -122,7 +136,7 @@ class TestClassifyIntent(unittest.TestCase):
             {"intent": "unknown_intent", "confidence": 0.9}
         )
         client.chat.completions.create = AsyncMock(return_value=completion)
-        result = run(classify_intent("test", [], None, client))
+        result = run(classify_intent("tenant-1", "test", [], None, client))
         self.assertEqual(result.source, "fallback")
 
     def test_llm_invalid_json_falls_to_fallback(self):
@@ -130,14 +144,14 @@ class TestClassifyIntent(unittest.TestCase):
         completion = MagicMock()
         completion.choices[0].message.content = "not valid json"
         client.chat.completions.create = AsyncMock(return_value=completion)
-        result = run(classify_intent("test", [], None, client))
+        result = run(classify_intent("tenant-1", "test", [], None, client))
         self.assertEqual(result.source, "fallback")
 
     def test_classifier_server_error_falls_to_llm(self):
         """If model server raises, the LLM fallback should be used."""
         client = self._make_llm_client(intent="greeting", confidence=0.97)
         # classifier_url is set but httpx will fail (no server running)
-        result = run(classify_intent("hi", [], "http://localhost:9999", client))
+        result = run(classify_intent("tenant-1", "hi", [], "http://localhost:9999", client))
         # Should succeed via LLM fallback
         self.assertEqual(result.intent, "greeting")
         self.assertEqual(result.source, "llm")
@@ -189,13 +203,27 @@ class TestRoute(unittest.TestCase):
 
     def test_lead_capture_routes_to_agent(self):
         client = self._make_llm_client("lead_capture", 0.97)
+        db = MagicMock()
+        db.execute = AsyncMock()
+        db.commit = AsyncMock()
 
         async def fake_agent(**kwargs):
             return {"reply": "Great, I've saved your contact info.", "action": "lead_captured", "sources": []}
 
-        result = run(route("t1", "s1", "I'd like a callback", [], llm_client=client, agent_fn=fake_agent))
-        self.assertEqual(result.routed_to, "agent")
+        result = run(route(
+            "t1",
+            "s1",
+            "I want to buy. My name is Rayan and my email is rayan@example.com",
+            [],
+            db_session=db,
+            llm_client=client,
+            agent_fn=fake_agent,
+        ))
+        self.assertEqual(result.routed_to, "direct")
         self.assertEqual(result.action, "lead_captured")
+        db.execute.assert_awaited_once()
+        self.assertEqual(db.execute.call_args[0][1]["tenant_id"], "t1")
+        self.assertEqual(json.loads(db.execute.call_args[0][1]["metadata"])["conversation_id"], "s1")
 
     def test_escalation_routes_to_agent(self):
         client = self._make_llm_client("escalation", 0.99)
@@ -206,6 +234,115 @@ class TestRoute(unittest.TestCase):
         result = run(route("t1", "s1", "I need a real person", [], llm_client=client, agent_fn=fake_agent))
         self.assertEqual(result.routed_to, "agent")
         self.assertEqual(result.action, "escalated")
+
+    def test_pricing_contact_email_routes_to_lead_capture(self):
+        client = self._make_llm_client("faq", 0.95)
+        db = MagicMock()
+        db.execute = AsyncMock()
+        db.commit = AsyncMock()
+
+        result = run(route(
+            "tenant-real",
+            "conv-1",
+            "Can I get pricing? I want a sales representative to contact me at rayan@example.com",
+            [],
+            db_session=db,
+            llm_client=client,
+        ))
+
+        self.assertEqual(result.intent, "lead_capture")
+        self.assertEqual(result.action, "lead_captured")
+        self.assertIn("captured your request", result.reply)
+        params = db.execute.call_args[0][1]
+        self.assertEqual(params["tenant_id"], "tenant-real")
+        self.assertEqual(params["email"], "rayan@example.com")
+        metadata = json.loads(params["metadata"])
+        self.assertEqual(metadata["conversation_id"], "conv-1")
+        self.assertIn("pricing", metadata["message"].lower())
+
+    def test_buy_contact_me_message_routes_to_lead_capture(self):
+        client = self._make_llm_client("escalation", 0.4)
+        db = MagicMock()
+        db.execute = AsyncMock()
+        db.commit = AsyncMock()
+
+        result = run(route(
+            "tenant-real",
+            "conv-2",
+            "I want to buy your service. Please contact me. My name is Rayan Halabi and my email is rayan@example.com",
+            [],
+            db_session=db,
+            llm_client=client,
+        ))
+
+        self.assertEqual(result.intent, "lead_capture")
+        self.assertEqual(result.action, "lead_captured")
+        params = db.execute.call_args[0][1]
+        self.assertEqual(params["tenant_id"], "tenant-real")
+        self.assertEqual(params["full_name"], "Rayan Halabi")
+
+    def test_sales_tenant_scope_uses_route_tenant(self):
+        client = self._make_llm_client("knowledge_search", 0.2)
+        db = MagicMock()
+        db.execute = AsyncMock()
+        db.commit = AsyncMock()
+
+        run(route(
+            "verified-tenant",
+            "conv-3",
+            "I am interested in your services. My name is Rayan and my email is rayan@example.com",
+            [],
+            db_session=db,
+            llm_client=client,
+        ))
+
+        params = db.execute.call_args[0][1]
+        self.assertEqual(params["tenant_id"], "verified-tenant")
+        self.assertNotEqual(params["tenant_id"], "spoofed-tenant")
+
+    def test_lead_capture_falls_back_to_public_runtime_table(self):
+        client = self._make_llm_client("faq", 0.95)
+        db = MagicMock()
+        db.execute = AsyncMock(side_effect=[Exception("app.leads missing"), None, None])
+        db.rollback = AsyncMock()
+        db.commit = AsyncMock()
+
+        result = run(route(
+            "00000000-0000-0000-0000-000000000001",
+            "11111111-1111-1111-1111-111111111111",
+            "I want to buy. My name is Rayan and my email is rayan@example.com",
+            [],
+            db_session=db,
+            llm_client=client,
+        ))
+
+        self.assertEqual(result.intent, "lead_capture")
+        self.assertEqual(result.action, "lead_captured")
+        db.rollback.assert_awaited_once()
+        self.assertEqual(db.execute.await_count, 3)
+        params = db.execute.await_args_list[2].args[1]
+        self.assertEqual(params["tenant_id"], "00000000-0000-0000-0000-000000000001")
+        self.assertEqual(params["conversation_id"], "11111111-1111-1111-1111-111111111111")
+        self.assertEqual(params["email"], "rayan@example.com")
+
+    def test_sales_missing_contact_asks_for_missing_info(self):
+        client = self._make_llm_client("faq", 0.95)
+        db = MagicMock()
+        db.execute = AsyncMock()
+
+        result = run(route(
+            "tenant-real",
+            "conv-4",
+            "Can I get a quote and demo?",
+            [],
+            db_session=db,
+            llm_client=client,
+        ))
+
+        self.assertEqual(result.intent, "lead_capture")
+        self.assertIsNone(result.action)
+        self.assertIn("email or phone", result.reply)
+        db.execute.assert_not_called()
 
     def test_low_confidence_routes_to_agent(self):
         client = self._make_llm_client("faq", 0.3)  # below threshold

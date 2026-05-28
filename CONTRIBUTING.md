@@ -36,9 +36,10 @@ Examples:
 ## Before You Push
 
 1. Re-run the relevant checks for the whole branch.
-2. Rebase or merge the latest `dev` if it moved.
-3. Make sure your branch is clean and ready for review.
-4. Push only after the branch is green for its scope.
+2. For cross-team work, run `powershell -ExecutionPolicy Bypass -File scripts/run_team_checks.ps1`.
+3. Rebase or merge the latest `dev` if it moved.
+4. Make sure your branch is clean and ready for review.
+5. Push only after the branch is green for its scope.
 
 ## Required Work Habits
 
@@ -60,4 +61,3 @@ Examples:
 ## Escalation
 
 If you are unsure whether a change belongs in `dev` or `main`, ask before merging.
-

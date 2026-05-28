@@ -16,7 +16,7 @@ from app.config import get_settings
 from app.database import get_db
 from app.models.widget import Widget
 from app.models.widget_session import WidgetSession
-from app.services.origin_check import get_allowed_origins, verify_origin
+from app.services.origin_check import verify_origin
 from app.services.widget_token import issue_widget_token
 
 settings = get_settings()
@@ -71,7 +71,7 @@ async def exchange_token(
     )
 
     # 4. Audit record
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).replace(tzinfo=None)
     session = WidgetSession(
         tenant_id=widget.tenant_id,
         widget_id=widget.id,
