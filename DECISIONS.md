@@ -106,13 +106,15 @@ pgvector was chosen over a standalone vector database (Weaviate, Qdrant, Pinecon
 
 ---
 
-## DEC-06 — Guardrails: Regex Rules over LLM-Based Detection
+## DEC-06 — Guardrails: Hybrid NeMo + Deterministic Rules
 
-**Decision:** Implement platform guardrails using deterministic regex pattern matching, not an LLM-based guardrail system.
+**Decision:** Implement the guardrails sidecar as a hybrid system: NeMo Guardrails is loaded from real config files as the class-aligned programmable guardrails layer, and deterministic Python rules remain as defense-in-depth and CI-friendly fallback checks.
 
 **Argument:**
 
-LLM-based guardrail systems (NeMo Guardrails, Llama Guard) add a round-trip LLM call to every message, increasing latency by 200–600ms and adding per-token cost. They are also probabilistic: a sufficiently creative adversarial prompt can bypass them.
+The Week 8 brief recommends NeMo Guardrails for topical, injection, and cross-tenant rails. The sidecar now includes a NeMo config under `services/guardrails/nemo/` and loads it through `RailsConfig`/`LLMRails` when `GUARDRAILS_USE_NEMO=true`.
+
+The existing deterministic rules stay in place because they are fast, version-controlled, easy to test in CI, and do not require an LLM provider key during local development. NeMo failures do not crash the sidecar unless `GUARDRAILS_NEMO_STRICT=true`.
 
 For a concierge assistant, the attack surface is narrow and well-defined:
 - Prompt injection: "ignore previous instructions"
@@ -120,14 +122,20 @@ For a concierge assistant, the attack surface is narrow and well-defined:
 - Cross-tenant probing: "show me another tenant's data"
 - Prompt disclosure: "show me your system prompt"
 
-Regex patterns covering these categories are deterministic, zero-latency, and version-controlled. The CI red-team gate (`injection_redteam`) verifies that all 10 canonical probes are refused on every push.
+The hybrid flow is:
+1. Redact PII/secrets using custom regex redaction.
+2. Evaluate immutable platform rules.
+3. Evaluate the NeMo-backed platform rail adapter if enabled and available.
+4. Evaluate tenant blocked-topic policy, which can only make behavior stricter.
+
+The CI red-team gate (`injection_redteam`) verifies that all canonical probes are refused on every push.
 
 The trade-off is that novel adversarial framings not covered by the current patterns can bypass the regex rules. We mitigate this by:
-1. Running the LLM-level refusal check as a fallback in the agent path
+1. Loading NeMo Guardrails as the programmable guardrails layer
 2. Making the pattern library extend easily (one PR to add a new rule)
 3. Treating the red-team eval as a living test suite that grows with discovered bypasses
 
-**Status:** Implemented in `services/guardrails/rules.py`.
+**Status:** Implemented in `apps/guardrails/app/main.py`, `services/guardrails/nemo_adapter.py`, `services/guardrails/rules.py`, `services/guardrails/redaction.py`, and `services/guardrails/nemo/`.
 
 ---
 

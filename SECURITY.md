@@ -45,9 +45,10 @@ Two layers — only one is tenant-editable:
    - Prompt injection detection
    - Jailbreak resistance
    - Cross-tenant refusal
+   - Prompt/system disclosure refusal
    - PII redaction before logs/traces
 
-   Tenants **cannot** weaken these. They fail CI when they regress.
+   Tenants **cannot** weaken these. NeMo Guardrails is loaded as the programmable rail layer, while deterministic Python rules remain as defense-in-depth. They fail CI when they regress.
 
 2. **Tenant rails** (configurable per tenant in admin):
    - Allowed/blocked topics
@@ -84,16 +85,22 @@ See Owner A's `DELETE /api/platform/tenants/{id}` endpoint for the erasure path.
 
 ### Platform Rails (Immutable)
 
-Implemented in `services/guardrails/rules.py`. Evaluated in order on every inbound message before any LLM call. These rules **cannot** be overridden by tenant configuration.
+Implemented as a hybrid layer:
+- NeMo config: `services/guardrails/nemo/config.yml` and `services/guardrails/nemo/rails.co`
+- NeMo adapter: `services/guardrails/nemo_adapter.py`
+- Deterministic fallback rules: `services/guardrails/rules.py`
 
-| Rule | Pattern type | Decision on match |
+The sidecar loads NeMo through `RailsConfig` and `LLMRails` when `GUARDRAILS_USE_NEMO=true` and falls back to deterministic rules if NeMo is unavailable. Set `GUARDRAILS_NEMO_STRICT=true` to fail closed when NeMo cannot load. Platform rails are evaluated on every inbound message before routing/model work and **cannot** be overridden by tenant configuration.
+
+| Rule | Layer | Decision on match |
 |------|-------------|------------------|
-| Prompt disclosure | Regex | `blocked_prompt_disclosure` |
-| Cross-tenant access | Regex | `blocked_cross_tenant` |
-| Prompt injection | Regex | `blocked_prompt_injection` |
-| Jailbreak | Regex | `blocked_jailbreak` |
+| Prompt disclosure | NeMo + regex fallback | `blocked_prompt_disclosure` |
+| Cross-tenant access | NeMo + regex fallback | `blocked_cross_tenant` |
+| Prompt injection | NeMo + regex fallback | `blocked_prompt_injection` |
+| Jailbreak | NeMo + regex fallback | `blocked_jailbreak` |
+| Tenant blocked topic | Tenant policy, stricter only | `blocked_tenant_topic` |
 
-A blocked message returns HTTP 403 with a `decision` field. The `allowed_message` field is redacted — the guardrails response never echoes the adversarial input.
+A blocked sidecar check returns the existing response schema with `allowed=false`, a `decision` field, and a redacted message. The chat API turns blocked messages into a safe refusal.
 
 ### Tenant Rails (Configurable)
 
@@ -101,6 +108,8 @@ Tenant admins configure these in the admin dashboard. They can restrict or custo
 - Allowed/blocked topics
 - Refusal tone and persona
 - Which tools the agent may call
+
+Currently, the sidecar minimally enforces `blocked_topics` when a `tenant_policy` is supplied. Persona, refusal tone, allowed topics, and enabled tools are stored/admin-editable but are not full NeMo tenant rails yet.
 
 ### Guardrails Service Contract
 
@@ -118,7 +127,7 @@ The `redacted_message` field is the input with PII stripped. Use this — not th
 
 ## Redaction (Owner C / Rayan)
 
-Implemented in `services/guardrails/redaction.py`. Runs on every message **before** it is written to logs, audit records, Redis session memory, or LLM context.
+Implemented in `services/guardrails/redaction.py`. This is custom regex-based redaction, not NeMo/Presidio redaction. Runs on every message **before** it is written to logs, audit records, Redis session memory, or LLM context.
 
 ### Patterns Redacted
 

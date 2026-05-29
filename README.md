@@ -34,9 +34,11 @@ For the demo walkthrough, read [docs/RUNBOOK.md](docs/RUNBOOK.md).
 - `admin/` - Streamlit admin image for Owner D
 - `widget/` - standalone React widget build and container image
 - `apps/modelserver/` - Rayan's model-server shell and container image
-- `apps/guardrails/` - Rayan's guardrails shell and container image
+- `apps/guardrails/` - Rayan's hybrid NeMo + deterministic guardrails sidecar
 - `apps/api/` - Hanan's platform-spine smoke image
 - `apps/widget/` and `apps/admin/` - source slices for the longer-term refactor path
+
+Guardrails are configured under `services/guardrails/`. NeMo Guardrails loads from `services/guardrails/nemo/` when `GUARDRAILS_USE_NEMO=true`; deterministic Python rules and custom regex redaction remain active as fallback and defense-in-depth.
 
 ## Team Checks
 

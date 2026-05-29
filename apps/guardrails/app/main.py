@@ -7,8 +7,9 @@ from pydantic import BaseModel, Field
 
 from apps.shared.service_auth import require_service_token
 from apps.shared.tracing import attach_request_id, resolve_request_id
+from services.guardrails.nemo_adapter import evaluate_nemo_guardrails
 from services.guardrails.redaction import redact_text
-from services.guardrails.rules import evaluate_platform_rules
+from services.guardrails.rules import evaluate_platform_rules, evaluate_tenant_policy
 
 app = FastAPI(title="Concierge Guardrails Sidecar", version="0.1.0")
 
@@ -44,7 +45,17 @@ def check(
 ) -> GuardrailsCheckResponse:
     attach_request_id(response, request_id)
     redaction = redact_text(payload.message)
-    guardrail = evaluate_platform_rules(payload.message)
+    platform_guardrail = evaluate_platform_rules(payload.message)
+    nemo_guardrail = evaluate_nemo_guardrails(payload.message, payload.tenant_policy)
+    tenant_guardrail = evaluate_tenant_policy(payload.message, payload.tenant_policy)
+    guardrail = next(
+        (
+            result
+            for result in (platform_guardrail, nemo_guardrail, tenant_guardrail)
+            if not result.allowed
+        ),
+        platform_guardrail,
+    )
 
     return GuardrailsCheckResponse(
         request_id=request_id,
