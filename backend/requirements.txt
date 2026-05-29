@@ -8,3 +8,4 @@ redis[hiredis]>=5.0.0
 alembic>=1.13.0
 httpx>=0.27.0
 openai>=1.0.0
+nemoguardrails>=0.17.0

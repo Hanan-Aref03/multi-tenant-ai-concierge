@@ -13,6 +13,8 @@ class GuardrailDecision(StrEnum):
     BLOCKED_JAILBREAK = "blocked_jailbreak"
     BLOCKED_PROMPT_DISCLOSURE = "blocked_prompt_disclosure"
     BLOCKED_CROSS_TENANT = "blocked_cross_tenant"
+    BLOCKED_TENANT_TOPIC = "blocked_tenant_topic"
+    BLOCKED_NEMO_UNAVAILABLE = "blocked_nemo_unavailable"
 
 
 @dataclass(frozen=True)
@@ -77,4 +79,44 @@ def evaluate_platform_rules(message: str) -> GuardrailResult:
         allowed=True,
         decision=GuardrailDecision.ALLOWED,
         reason="No platform guardrail rule matched.",
+    )
+
+
+def evaluate_tenant_policy(
+    message: str,
+    tenant_policy: dict[str, object] | None,
+) -> GuardrailResult:
+    """Apply tenant-owned rails that can only make policy stricter."""
+
+    if not tenant_policy:
+        return GuardrailResult(
+            allowed=True,
+            decision=GuardrailDecision.ALLOWED,
+            reason="No tenant policy was provided.",
+        )
+
+    blocked_topics = tenant_policy.get("blocked_topics")
+    if not isinstance(blocked_topics, list):
+        return GuardrailResult(
+            allowed=True,
+            decision=GuardrailDecision.ALLOWED,
+            reason="No tenant blocked-topic rail matched.",
+        )
+
+    lowered = message.lower()
+    for topic in blocked_topics:
+        if not isinstance(topic, str):
+            continue
+        normalized = topic.strip().lower()
+        if normalized and normalized in lowered:
+            return GuardrailResult(
+                allowed=False,
+                decision=GuardrailDecision.BLOCKED_TENANT_TOPIC,
+                reason="Tenant blocked-topic rail matched.",
+            )
+
+    return GuardrailResult(
+        allowed=True,
+        decision=GuardrailDecision.ALLOWED,
+        reason="No tenant blocked-topic rail matched.",
     )

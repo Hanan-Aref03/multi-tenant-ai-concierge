@@ -117,7 +117,7 @@ This document tracks the progress made by Mohammad (Owner B) on the multi-tenant
 - **`ClassifyHealthResponse.is_serving()`**: returns True only when both `model_loaded=True` AND `model_checksum_valid=True` (OPS-04 enforcement).
 - **`verify_classifier_health(url)`**: async function that pings `GET /health` and returns a `ClassifyHealthResponse` or `None` if unreachable.
 - **OPS-04 spec documented**: model server must compute SHA-256 of the artifact on startup, compare to `CLASSIFIER_MODEL_SHA256`, and return 503 on all `/classify` requests if the check fails.
-- **`VALID_INTENTS` kept in sync**: test verifies `classifier_contract.VALID_INTENTS == router.INTENTS` so the two modules never diverge.
+- **`VALID_INTENTS` kept in sync**: test verifies `classifier_contract.VALID_INTENTS == constants.INTENTS` so the two modules never diverge.
 
 ### Step 4E: Conversation Endpoints (`apps/api/app/api/v1/conversations.py`)
 - **POST /message (4E.1)**:
