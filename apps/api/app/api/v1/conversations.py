@@ -164,7 +164,7 @@ async def send_message(
 
     Flow:
     1. Load conversation history from Redis.
-    2. Classify intent via services.router.router.classify_intent().
+    2. Classify intent via services.router.classifier_service.classify_intent().
     3. Route: direct (greeting/off_topic) | RAG (faq/knowledge_search) | agent.
     4. Append user + assistant turns and save history back to Redis.
     5. Return reply, intent, action, and optional RAG sources.
