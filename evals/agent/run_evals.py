@@ -25,7 +25,10 @@ from unittest.mock import AsyncMock, MagicMock
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from services.router.router import ClassifyResult, _decide_route, classify_intent, route
+from services.router.classifier_service import classify_intent
+from services.router.contracts import ClassifyResult
+from services.router.routing_policy import _decide_route
+from services.router.router import route
 
 
 # ---------------------------------------------------------------------------

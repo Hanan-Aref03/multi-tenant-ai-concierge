@@ -23,13 +23,10 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from services.router.router import (
-    CLASSIFIER_CONFIDENCE_THRESHOLD,
-    RAG_CONFIDENCE_THRESHOLD,
-    ClassifyResult,
-    _decide_route,
-    route,
-)
+from services.router.constants import CLASSIFIER_CONFIDENCE_THRESHOLD, RAG_CONFIDENCE_THRESHOLD
+from services.router.contracts import ClassifyResult
+from services.router.routing_policy import _decide_route
+from services.router.router import route
 from services.agent.agent import MAX_ITERATIONS, run_agent
 from services.agent.tools import execute_tool
 
@@ -440,7 +437,7 @@ class TestClassifierContract(unittest.TestCase):
 
     def test_valid_intents_match_router_intents(self):
         from services.router.classifier_contract import VALID_INTENTS
-        from services.router.router import INTENTS
+        from services.router.constants import INTENTS
         self.assertEqual(VALID_INTENTS, INTENTS)
 
 

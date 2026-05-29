@@ -29,17 +29,13 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
 
-from services.router.router import (
-    CLASSIFIER_CONFIDENCE_THRESHOLD,
-    RAG_CONFIDENCE_THRESHOLD,
-    ClassifyResult,
-    RouteResult,
-    _decide_route,
-    _log_routing,
-    classify_intent,
-    normalize_classifier_intent,
-    route,
-)
+from services.router.classifier_client import normalize_classifier_intent
+from services.router.classifier_service import classify_intent
+from services.router.constants import CLASSIFIER_CONFIDENCE_THRESHOLD
+from services.router.contracts import ClassifyResult, RouteResult
+from services.router.routing_logging import _log_routing
+from services.router.routing_policy import _decide_route
+from services.router.router import route
 
 
 def run(coro):
