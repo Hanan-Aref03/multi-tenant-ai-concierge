@@ -16,7 +16,7 @@ from apps.api.app.main import build_platform_application
 class SmokeTests(unittest.TestCase):
     def test_platform_spine_happy_path(self) -> None:
         platform = build_platform_application()
-        owner = Principal(subject="hanan", role=TenantRole.PLATFORM_MANAGER)
+        owner = Principal(subject="hanan", role=TenantRole.TENANT_MANAGER)
 
         tenant = platform.tenant_service.provision_tenant(
             TenantProvisionRequest(

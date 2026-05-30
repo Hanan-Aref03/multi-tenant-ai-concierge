@@ -16,12 +16,20 @@ AS $$
     SELECT NULLIF(current_setting('app.actor_role', true), '');
 $$;
 
+CREATE OR REPLACE FUNCTION app.is_tenant_manager()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+AS $$
+    SELECT app.current_actor_role() IN ('tenant_manager', 'platform_manager');
+$$;
+
 CREATE OR REPLACE FUNCTION app.is_platform_manager()
 RETURNS boolean
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT app.current_actor_role() = 'platform_manager';
+    SELECT app.is_tenant_manager();
 $$;
 
 CREATE OR REPLACE FUNCTION app.has_tenant_access(row_tenant_id uuid)
@@ -29,7 +37,7 @@ RETURNS boolean
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT row_tenant_id = app.current_tenant_id() OR app.is_platform_manager();
+    SELECT row_tenant_id = app.current_tenant_id() OR app.is_tenant_manager();
 $$;
 
 ALTER TABLE app.tenants ENABLE ROW LEVEL SECURITY;

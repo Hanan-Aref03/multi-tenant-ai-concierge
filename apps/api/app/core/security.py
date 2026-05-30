@@ -32,7 +32,8 @@ class WidgetTokenError(SecurityError):
 class TenantRole(str, Enum):
     """Principal roles used by the platform spine."""
 
-    PLATFORM_MANAGER = "platform_manager"
+    TENANT_MANAGER = "tenant_manager"
+    PLATFORM_MANAGER = "tenant_manager"
     TENANT_ADMIN = "tenant_admin"
     MEMBER = "member"
     WIDGET_VISITOR = "widget_visitor"
