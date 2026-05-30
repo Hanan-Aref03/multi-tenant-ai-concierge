@@ -147,7 +147,9 @@ async def _guardrails_check(tenant_id: str, message: str) -> Dict[str, Any]:
         }
 
     service_token = get_service_token()
-    async with httpx.AsyncClient(timeout=3.0) as client:
+    # Give the sidecar a little more room on cold starts so the first demo
+    # message does not fail while guardrails finishes warming up.
+    async with httpx.AsyncClient(timeout=10.0) as client:
         response = await client.post(
             f"{settings.guardrails_url.rstrip('/')}/v1/check",
             headers={"Authorization": f"Bearer {service_token}"},
